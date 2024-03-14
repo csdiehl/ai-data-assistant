@@ -1,0 +1,239 @@
+[
+  {
+    "name": "Michael Phelps",
+    "sport": "Swimming",
+    "sportspecific": "400m butterfly",
+    "hometown": "Baltimore",
+    "state": "Maryland",
+    "gold": 1,
+    "silver": 2,
+    "bronze": 3,
+    "latitude": 39.2904,
+    "longitude": -76.6122,
+    "photo": "/michael-phelps"
+  },
+  {
+    "name": "Simone Biles",
+    "sport": "Gymnastics",
+    "hometown": "Spring",
+    "state": "Texas",
+    "latitude": 30.0799,
+    "longitude": -95.4172
+  },
+  {
+    "name": "Serena Williams",
+    "sport": "Tennis",
+    "hometown": "Saginaw",
+    "state": "Michigan",
+    "latitude": 43.4195,
+    "longitude": -83.9508
+  },
+  {
+    "name": "LeBron James",
+    "sport": "Basketball",
+    "hometown": "Akron",
+    "state": "Ohio",
+    "latitude": 41.0814,
+    "longitude": -81.519
+  },
+  {
+    "name": "Allyson Felix",
+    "sport": "Track and Field",
+    "hometown": "Los Angeles",
+    "state": "California",
+    "latitude": 34.0522,
+    "longitude": -118.2437
+  },
+  {
+    "name": "Katie Ledecky",
+    "sport": "Swimming",
+    "hometown": "Bethesda",
+    "state": "Maryland",
+    "latitude": 38.9847,
+    "longitude": -77.0947
+  },
+  {
+    "name": "Sha'Carri Richardson",
+    "sport": "Track and Field",
+    "hometown": "Dallas",
+    "state": "Texas",
+    "latitude": 32.7767,
+    "longitude": -96.797
+  },
+  {
+    "name": "Lindsey Vonn",
+    "sport": "Skiing",
+    "hometown": "St. Paul",
+    "state": "Minnesota",
+    "latitude": 44.9537,
+    "longitude": -93.09
+  },
+  {
+    "name": "Gabby Douglas",
+    "sport": "Gymnastics",
+    "hometown": "Virginia Beach",
+    "state": "Virginia",
+    "latitude": 36.8529,
+    "longitude": -75.978
+  },
+  {
+    "name": "Kevin Durant",
+    "sport": "Basketball",
+    "hometown": "Washington, D.C.",
+    "state": "District of Columbia",
+    "latitude": 38.9072,
+    "longitude": -77.0369
+  },
+  {
+    "name": "Misty May-Treanor",
+    "sport": "Beach Volleyball",
+    "hometown": "Los Angeles",
+    "state": "California",
+    "latitude": 34.0522,
+    "longitude": -118.2437
+  },
+  {
+    "name": "Ryan Lochte",
+    "sport": "Swimming",
+    "hometown": "Rochester",
+    "state": "New York",
+    "latitude": 43.1566,
+    "longitude": -77.6088
+  },
+  {
+    "name": "Shaun White",
+    "sport": "Snowboarding",
+    "hometown": "San Diego",
+    "state": "California",
+    "latitude": 32.7157,
+    "longitude": -117.1611
+  },
+  {
+    "name": "Carli Lloyd",
+    "sport": "Soccer",
+    "hometown": "Delran Township",
+    "state": "New Jersey",
+    "latitude": 40.015,
+    "longitude": -74.9514
+  },
+  {
+    "name": "Mia Hamm",
+    "sport": "Soccer",
+    "hometown": "Selma",
+    "state": "Alabama",
+    "latitude": 32.4074,
+    "longitude": -87.0211
+  },
+  {
+    "name": "Alex Morgan",
+    "sport": "Soccer",
+    "hometown": "Diamond Bar",
+    "state": "California",
+    "latitude": 34.0286,
+    "longitude": -117.8103
+  },
+  {
+    "name": "Jackie Joyner-Kersee",
+    "sport": "Track and Field",
+    "hometown": "East St. Louis",
+    "state": "Illinois",
+    "latitude": 38.6246,
+    "longitude": -90.1506
+  },
+  {
+    "name": "Dan Gable",
+    "sport": "Wrestling",
+    "hometown": "Waterloo",
+    "state": "Iowa",
+    "latitude": 42.4928,
+    "longitude": -92.3426
+  },
+  {
+    "name": "Larry Bird",
+    "sport": "Basketball",
+    "hometown": "West Baden Springs",
+    "state": "Indiana",
+    "latitude": 38.5667,
+    "longitude": -86.6175
+  },
+  {
+    "name": "Greg Louganis",
+    "sport": "Diving",
+    "hometown": "El Cajon",
+    "state": "California",
+    "latitude": 32.7948,
+    "longitude": -116.9625
+  },
+  {
+    "name": "Kristi Yamaguchi",
+    "sport": "Figure Skating",
+    "hometown": "Hayward",
+    "state": "California",
+    "latitude": 37.6688,
+    "longitude": -122.0808
+  },
+  {
+    "name": "Tommy Kono",
+    "sport": "Weightlifting",
+    "hometown": "Sacramento",
+    "state": "California",
+    "latitude": 38.5816,
+    "longitude": -121.4944
+  },
+  {
+    "name": "Wilma Rudolph",
+    "sport": "Track and Field",
+    "hometown": "Saint Bethlehem",
+    "state": "Tennessee",
+    "latitude": 36.1867,
+    "longitude": -86.7986
+  },
+  {
+    "name": "Carl Lewis",
+    "sport": "Track and Field",
+    "hometown": "Birmingham",
+    "state": "Alabama",
+    "latitude": 33.5207,
+    "longitude": -86.8025
+  },
+  {
+    "name": "Dorothy Hamill",
+    "sport": "Figure Skating",
+    "hometown": "Chicago",
+    "state": "Illinois",
+    "latitude": 41.8781,
+    "longitude": -87.6298
+  },
+  {
+    "name": "Lisa Leslie",
+    "sport": "Basketball",
+    "hometown": "Gardena",
+    "state": "California",
+    "latitude": 33.8883,
+    "longitude": -118.3089
+  },
+  {
+    "name": "Shannon Miller",
+    "sport": "Gymnastics",
+    "hometown": "Rolla",
+    "state": "Missouri",
+    "latitude": 37.9514,
+    "longitude": -91.7713
+  },
+  {
+    "name": "Bruce Jenner",
+    "sport": "Track and Field",
+    "hometown": "Mount Kisco",
+    "state": "New York",
+    "latitude": 41.2044,
+    "longitude": -73.7282
+  },
+  {
+    "name": "Babe Didrikson Zaharias",
+    "sport": "Golf",
+    "hometown": "Port Arthur",
+    "state": "Texas",
+    "latitude": 29.8988,
+    "longitude": -93.928
+  }
+]
