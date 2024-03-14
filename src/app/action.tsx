@@ -1,7 +1,10 @@
 import { OpenAI } from "openai"
 import { createAI, getMutableAIState, render } from "ai/rsc"
 import { z } from "zod"
-import FlightCard from "./FlightCard"
+import Card from "./Card"
+import Chart from "./Chart"
+import data from "./cars.json"
+import { sum, max, mean } from "d3-array"
 
 export interface FlightInfo {
   flightNumber: string
@@ -19,13 +22,24 @@ function Spinner() {
   return <div>Loading...</div>
 }
 
+function describeDataset() {
+  return { length: data.length, features: Object.keys(data[0]) }
+}
+
 // An example of a function that fetches flight information from an external API.
-async function getFlightInfo(flightNumber: string): Promise<FlightInfo> {
-  return {
-    flightNumber,
-    departure: "New York",
-    arrival: "San Francisco",
-  }
+function summarizeData({
+  category,
+  operation,
+}: {
+  category: string
+  operation: "sum" | "max" | "mean"
+}) {
+  console.log(category, operation)
+  return operation === "sum"
+    ? sum(data, (d) => d[category])
+    : operation === "max"
+    ? max(data, (d) => d[category])
+    : mean(data, (d) => d[category])
 }
 
 async function submitUserMessage(userInput: string) {
@@ -44,10 +58,22 @@ async function submitUserMessage(userInput: string) {
 
   // The `render()` creates a generated, streamable UI.
   const ui = render({
-    model: "gpt-4-0125-preview",
+    model: "gpt-3.5-turbo",
     provider: openai,
     messages: [
-      { role: "system", content: "You are a flight assistant" },
+      {
+        role: "system",
+        content: `\
+You are a data visualization assistant. Your job is to help the user understand a dataset that they have.
+You can summarize data for the user, give them insights about the type of data they have, or generate simple charts for them.  
+
+If the user asks for a general description of the dataset, just answer the question normally, without using any tools. 
+If the user includes terms like mean, sum, maximum or how many - call \`summarize_data\` to give them the results.
+If the user wants you to show them a chart, call \`render_chart\`.
+If the user wants to complete an impossible task, respond that you are a a work in progress and cannot do that.
+
+Besides that, you can also chat with users and do some calculations if needed.`,
+      },
       { role: "user", content: userInput },
     ],
     // `text` is called when an AI returns a text response (as opposed to a tool call).
@@ -68,33 +94,74 @@ async function submitUserMessage(userInput: string) {
       return <p>{content}</p>
     },
     tools: {
-      get_flight_info: {
-        description: "Get the information for a flight",
+      render_chart: {
+        description:
+          "Render a chart based on the variables the user has provided.",
         parameters: z
           .object({
-            flightNumber: z.string().describe("the number of the flight"),
+            x: z.string().describe("The x-axis variable."),
+            y: z.string().describe("The y-axis variable."),
           })
           .required(),
-        render: async function* ({ flightNumber }) {
+        render: async function* ({ x, y }) {
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
-
-          // Fetch the flight information from an external API.
-          const flightInfo = await getFlightInfo(flightNumber)
 
           // Update the final AI state.
           aiState.done([
             ...aiState.get(),
             {
               role: "function",
-              name: "get_flight_info",
+              name: "render_chart",
               // Content can be any string to provide context to the LLM in the rest of the conversation.
-              content: JSON.stringify(flightInfo),
+              content: `scatterplot of ${x} and ${y}`,
             },
           ])
 
           // Return the flight card to the client.
-          return <FlightCard flightInfo={flightInfo} />
+          return <Chart x={x} y={y} />
+        },
+      },
+
+      summarize_data: {
+        description:
+          "Create a summary of the data, grouping one variable by another.",
+        parameters: z
+          .object({
+            category: z
+              .string()
+              .describe(
+                "The category by which the user wants to summarize the data."
+              ),
+            operation: z
+              .union([z.literal("sum"), z.literal("max"), z.literal("mean")])
+              .describe(
+                "The type of aggregation the user wants. This can be sum, mean, or max."
+              ),
+          })
+          .required(),
+        render: async function* ({ category, operation }) {
+          // Show a spinner on the client while we wait for the response.
+          yield <Spinner />
+
+          // Fetch the flight information from an external API.
+          const dataSummary = summarizeData({ category, operation })
+
+          // Update the final AI state.
+          aiState.done([
+            ...aiState.get(),
+            {
+              role: "function",
+              name: "summarize_data",
+              // Content can be any string to provide context to the LLM in the rest of the conversation.
+              content: JSON.stringify(dataSummary),
+            },
+          ])
+
+          // Return the flight card to the client.
+          return (
+            <Card category={category} type={operation} answer={dataSummary} />
+          )
         },
       },
     },

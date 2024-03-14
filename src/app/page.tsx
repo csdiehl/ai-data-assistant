@@ -10,6 +10,7 @@ const App = styled.div`
   color: black;
   height: 100vh;
   padding: 16px;
+  overflow-y: scroll;
 `
 
 const Input = styled.input`
@@ -20,6 +21,8 @@ const Input = styled.input`
   background: #fff;
   border: 1px solid #ccc;
   color: black;
+  position: absolute;
+  bottom: 16px;
 `
 
 const Message = styled.div`
@@ -32,6 +35,10 @@ const Message = styled.div`
   line-height: 1.25rem;
 `
 
+const Messages = styled.div`
+  margin-bottom: 100px;
+`
+
 export default function Page() {
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useUIState<typeof AI>()
@@ -39,12 +46,14 @@ export default function Page() {
 
   return (
     <App>
-      {
-        // View messages in UI state
-        messages.map((message) => (
-          <Message key={message.id}>{message.display}</Message>
-        ))
-      }
+      <Messages>
+        {
+          // View messages in UI state
+          messages.map((message) => (
+            <Message key={message.id}>{message.display}</Message>
+          ))
+        }
+      </Messages>
 
       <form
         onSubmit={async (e) => {
