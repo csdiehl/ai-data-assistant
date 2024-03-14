@@ -2,15 +2,10 @@ import { OpenAI } from "openai"
 import { createAI, getMutableAIState, render } from "ai/rsc"
 import { z } from "zod"
 import Card from "./Card"
+import Description from "./Description"
 import Chart from "./Chart"
 import data from "./cars.json"
 import { sum, max, mean } from "d3-array"
-
-export interface FlightInfo {
-  flightNumber: string
-  departure: string
-  arrival: string
-}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -20,10 +15,6 @@ const openai = new OpenAI({
 // or 3rd party component libraries.
 function Spinner() {
   return <div>Loading...</div>
-}
-
-function describeDataset() {
-  return { length: data.length, features: Object.keys(data[0]) }
 }
 
 // An example of a function that fetches flight information from an external API.
@@ -48,13 +39,18 @@ async function submitUserMessage(userInput: string) {
   const aiState = getMutableAIState<typeof AI>()
 
   // Update the AI state with the new user message.
-  aiState.update([
+  aiState.update({
     ...aiState.get(),
-    {
-      role: "user",
-      content: userInput,
-    },
-  ])
+    messages: [
+      ...aiState.get().messages,
+      {
+        role: "user",
+        content: userInput,
+      },
+    ],
+  })
+
+  // const dataset: string = JSON.stringify(aiState.get().dataset)
 
   // The `render()` creates a generated, streamable UI.
   const ui = render({
@@ -67,7 +63,7 @@ async function submitUserMessage(userInput: string) {
 You are a data visualization assistant. Your job is to help the user understand a dataset that they have.
 You can summarize data for the user, give them insights about the type of data they have, or generate simple charts for them.  
 
-If the user asks for a general description of the dataset, just answer the question normally, without using any tools. 
+If the user asks for a general description of the dataset, call \`describe_dataset\`
 If the user includes terms like mean, sum, maximum or how many - call \`summarize_data\` to give them the results.
 If the user wants you to show them a chart, call \`render_chart\`.
 If the user wants to complete an impossible task, respond that you are a a work in progress and cannot do that.
@@ -82,18 +78,35 @@ Besides that, you can also chat with users and do some calculations if needed.`,
     text: ({ content, done }) => {
       // When it's the final content, mark the state as done and ready for the client to access.
       if (done) {
-        aiState.done([
-          ...aiState.get(),
-          {
-            role: "assistant",
-            content,
-          },
-        ])
+        aiState.done({
+          dataset: aiState.get().dataset,
+          messages: [
+            ...aiState.get().messages,
+            {
+              role: "assistant",
+              content,
+            },
+          ],
+        })
       }
 
       return <p>{content}</p>
     },
     tools: {
+      describe_dataset: {
+        description:
+          "Give a general description of the data, including the variables and size of the dataset.",
+        parameters: z.object({}).required(),
+        render: async function* () {
+          const dataset: any[] = aiState.get().dataset
+          return (
+            <Description
+              length={dataset.length}
+              vars={Object.keys(dataset[0])}
+            />
+          )
+        },
+      },
       render_chart: {
         description:
           "Render a chart based on the variables the user has provided.",
@@ -108,15 +121,18 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           yield <Spinner />
 
           // Update the final AI state.
-          aiState.done([
-            ...aiState.get(),
-            {
-              role: "function",
-              name: "render_chart",
-              // Content can be any string to provide context to the LLM in the rest of the conversation.
-              content: `scatterplot of ${x} and ${y}`,
-            },
-          ])
+          aiState.done({
+            dataset: aiState.get().dataset,
+            messages: [
+              ...aiState.get().messages,
+              {
+                role: "function",
+                name: "render_chart",
+                // Content can be any string to provide context to the LLM in the rest of the conversation.
+                content: `scatterplot of ${x} and ${y}`,
+              },
+            ],
+          })
 
           // Return the flight card to the client.
           return <Chart x={x} y={y} />
@@ -148,15 +164,18 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           const dataSummary = summarizeData({ category, operation })
 
           // Update the final AI state.
-          aiState.done([
-            ...aiState.get(),
-            {
-              role: "function",
-              name: "summarize_data",
-              // Content can be any string to provide context to the LLM in the rest of the conversation.
-              content: JSON.stringify(dataSummary),
-            },
-          ])
+          aiState.done({
+            dataset: aiState.get().dataset,
+            messages: [
+              ...aiState.get().messages,
+              {
+                role: "function",
+                name: "summarize_data",
+                // Content can be any string to provide context to the LLM in the rest of the conversation.
+                content: JSON.stringify(dataSummary),
+              },
+            ],
+          })
 
           // Return the flight card to the client.
           return (
@@ -175,11 +194,17 @@ Besides that, you can also chat with users and do some calculations if needed.`,
 
 // Define the initial state of the AI. It can be any JSON object.
 const initialAIState: {
-  role: "user" | "assistant" | "system" | "function"
-  content: string
-  id?: string
-  name?: string
-}[] = []
+  dataset: any[]
+  messages: {
+    role: "user" | "assistant" | "system" | "function"
+    content: string
+    id?: string
+    name?: string
+  }[]
+} = {
+  dataset: data,
+  messages: [],
+}
 
 // The initial UI state that the client will keep track of, which contains the message IDs and their UI nodes.
 const initialUIState: {
