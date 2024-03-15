@@ -6,6 +6,7 @@ import Description from "./Description"
 import Chart from "./Chart"
 import BarChart from "./BarChart"
 import { sum, max, mean } from "d3-array"
+import defaultData from "./cars.json"
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -15,6 +16,15 @@ const openai = new OpenAI({
 // or 3rd party component libraries.
 function Spinner() {
   return <div>Loading...</div>
+}
+
+function unionOfLiterals<T extends string | number>(constants: readonly T[]) {
+  const literals = constants.map((x) => z.literal(x)) as unknown as readonly [
+    z.ZodLiteral<T>,
+    z.ZodLiteral<T>,
+    ...z.ZodLiteral<T>[]
+  ]
+  return z.union(literals)
 }
 
 // An example of a function that fetches flight information from an external API.
@@ -74,6 +84,9 @@ async function submitUserMessage(userInput: string) {
     ],
   })
 
+  // Force the ai to use the actual column names, even if the user provides similar-sounding names
+  const cols: any = unionOfLiterals(aiState.get().columns)
+
   // const dataset: string = JSON.stringify(aiState.get().dataset)
 
   // The `render()` creates a generated, streamable UI.
@@ -123,7 +136,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
         description: "Sort the data by a variable.",
         parameters: z
           .object({
-            category: z.string().describe("The variable to sort by."),
+            category: cols.describe("The variable to sort by."),
             order: z
               .union([z.literal("ascending"), z.literal("descending")])
               .describe(
@@ -165,8 +178,8 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           "Render a chart based on the variables the user has provided.",
         parameters: z
           .object({
-            x: z.string().describe("The x-axis variable."),
-            y: z.string().describe("The y-axis variable."),
+            x: cols.describe("The x-axis variable."),
+            y: cols.describe("The y-axis variable."),
             color: z
               .string()
               .describe(
@@ -257,6 +270,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
 const initialAIState: {
   dataset: any[]
   dataKey: string
+  columns: string[]
   messages: {
     role: "user" | "assistant" | "system" | "function"
     content: string
@@ -265,8 +279,9 @@ const initialAIState: {
   }[]
 } = {
   dataset: [],
-  dataKey: "Name",
+  dataKey: Object.keys(defaultData[0])[0],
   messages: [],
+  columns: Object.keys(defaultData[0]),
 }
 
 // The initial UI state that the client will keep track of, which contains the message IDs and their UI nodes.

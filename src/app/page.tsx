@@ -85,6 +85,7 @@ export default function Page() {
       dataset: file,
       // make the key the first variable encountered in the dataset by default
       dataKey: Object.keys(file[0])[0],
+      columns: Object.keys(file[0]),
     })
   }
 
