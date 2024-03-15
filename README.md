@@ -4,7 +4,14 @@ This is a generative AI assistant for helping you understand a new dataset. You 
 - Give you summary statistics based on free-form prompts
 - Give you general descriptions of the dataset
 
+![image](./ai_scatter_example.png)
+
 It uses Vercel's AI SDK 3.0 to create UI components and Observable Plot to render the charts.
+
+### Try out the following prompts
+
+- what is the relationship between Acceleration and Horsepower? Color the circles by country of origin.
+- which cars have the best acceleration?
 
 ## Getting Started
 

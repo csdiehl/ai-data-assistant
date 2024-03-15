@@ -1,6 +1,7 @@
 "use client"
 
 import styled from "styled-components"
+import { Label } from "./styles"
 
 const Wrapper = styled.div`
   border: 1px solid #ccc;
@@ -13,13 +14,6 @@ const Wrapper = styled.div`
     font-size: 1rem;
     font-weight: bold;
   }
-`
-
-const Label = styled.li`
-  list-style: none;
-  font-size: 1rem;
-  font-weight: 300;
-  color: grey;
 `
 
 // An example of a flight card component.

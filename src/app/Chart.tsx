@@ -3,7 +3,7 @@
 import React, { useRef, useEffect } from "react"
 import data from "./cars.json"
 import * as Plot from "@observablehq/plot"
-import styled from "styled-components"
+import { Card } from "./styles"
 
 interface ChartSpec {
   type?: "line" | "bar" | "scatter"
@@ -12,17 +12,6 @@ interface ChartSpec {
   color?: string
 }
 
-const Card = styled.div`
-  border: 1px solid #ccc;
-  background: #fff;
-  padding: 8px;
-  border-radius: 8px;
-
-  h2 {
-    margin: 16px 0;
-  }
-`
-
 const Chart = ({ x, y, color = "steelblue", type }: ChartSpec) => {
   const container = useRef(null)
 
@@ -30,7 +19,8 @@ const Chart = ({ x, y, color = "steelblue", type }: ChartSpec) => {
     if (!container.current) return
     const plot = Plot.plot({
       y: { grid: true },
-      marks: [Plot.ruleY([0]), Plot.dot(data, { x: x, y: y })],
+      color: { legend: true },
+      marks: [Plot.ruleY([0]), Plot.dot(data, { x: x, y: y, fill: color })],
     })
 
     container.current.append(plot)

@@ -4,8 +4,11 @@ import { z } from "zod"
 import Card from "./Card"
 import Description from "./Description"
 import Chart from "./Chart"
+import BarChart from "./BarChart"
 import data from "./cars.json"
 import { sum, max, mean } from "d3-array"
+
+const nameVar = "Name"
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -31,6 +34,20 @@ function summarizeData({
     : operation === "max"
     ? max(data, (d) => d[category])
     : mean(data, (d) => d[category])
+}
+
+function sortData(
+  category: string,
+  order: "ascending" | "descending",
+  topK = 20
+) {
+  return data
+    .toSorted((a, b) =>
+      order === "ascending"
+        ? a[category] - b[category]
+        : b[category] - a[category]
+    )
+    .slice(0, topK)
 }
 
 async function submitUserMessage(userInput: string) {
@@ -64,8 +81,10 @@ You are a data visualization assistant. Your job is to help the user understand 
 You can summarize data for the user, give them insights about the type of data they have, or generate simple charts for them.  
 
 If the user asks for a general description of the dataset, call \`describe_dataset\`
+If the user uses for a superlative like highest, most, least, or fewest, call \`sort_data\`
 If the user includes terms like mean, sum, maximum or how many - call \`summarize_data\` to give them the results.
-If the user wants you to show them a chart, call \`render_chart\`.
+If you need to make a chart to show the relationship between two or more variables, call \`render_chart\`.
+
 If the user wants to complete an impossible task, respond that you are a a work in progress and cannot do that.
 
 Besides that, you can also chat with users and do some calculations if needed.`,
@@ -93,6 +112,31 @@ Besides that, you can also chat with users and do some calculations if needed.`,
       return <p>{content}</p>
     },
     tools: {
+      sort_data: {
+        description: "Sort the data by a variable.",
+        parameters: z
+          .object({
+            category: z.string().describe("The variable to sort by."),
+            order: z
+              .union([z.literal("ascending"), z.literal("descending")])
+              .describe(
+                "Whether to sort the data by biggest first (descending) or smallest first (ascending)."
+              ),
+          })
+          .required(),
+        render: async function* ({ category, order }) {
+          yield <Spinner />
+          const sorted = sortData(category, order)
+          return (
+            <BarChart
+              data={sorted}
+              x={category}
+              y={nameVar}
+              sortOrder={order}
+            />
+          )
+        },
+      },
       describe_dataset: {
         description:
           "Give a general description of the data, including the variables and size of the dataset.",
@@ -114,9 +158,14 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           .object({
             x: z.string().describe("The x-axis variable."),
             y: z.string().describe("The y-axis variable."),
+            color: z
+              .string()
+              .describe(
+                "The color variable. It could be a variable or just a color name."
+              ),
           })
           .required(),
-        render: async function* ({ x, y }) {
+        render: async function* ({ x, y, color }) {
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
@@ -135,7 +184,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           })
 
           // Return the flight card to the client.
-          return <Chart x={x} y={y} />
+          return <Chart x={x} y={y} color={color} />
         },
       },
 
@@ -222,3 +271,5 @@ export const AI = createAI({
   initialUIState,
   initialAIState,
 })
+
+// what cars have the most horsepower?
