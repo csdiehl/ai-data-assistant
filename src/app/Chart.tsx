@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useRef, useEffect } from "react"
-import data from "./cars.json"
 import * as Plot from "@observablehq/plot"
 import { Card } from "./styles"
 
@@ -10,9 +9,10 @@ interface ChartSpec {
   x: string
   y: string
   color?: string
+  data: any[]
 }
 
-const Chart = ({ x, y, color = "steelblue", type }: ChartSpec) => {
+const Chart = ({ data, x, y, color = "steelblue", type }: ChartSpec) => {
   const container = useRef(null)
 
   useEffect(() => {
@@ -26,7 +26,7 @@ const Chart = ({ x, y, color = "steelblue", type }: ChartSpec) => {
     container.current.append(plot)
 
     return () => plot.remove()
-  }, [x, y, color])
+  }, [x, y, color, data])
   return <Card ref={container}></Card>
 }
 

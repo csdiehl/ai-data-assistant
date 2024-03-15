@@ -21,7 +21,6 @@ const Answer = styled.p`
   color: grey;
 `
 
-// An example of a flight card component.
 function Card({
   category,
   type,

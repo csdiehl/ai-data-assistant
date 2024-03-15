@@ -5,7 +5,6 @@ import Card from "./Card"
 import Description from "./Description"
 import Chart from "./Chart"
 import BarChart from "./BarChart"
-import data from "./cars.json"
 import { sum, max, mean } from "d3-array"
 
 const nameVar = "Name"
@@ -21,13 +20,16 @@ function Spinner() {
 }
 
 // An example of a function that fetches flight information from an external API.
-function summarizeData({
-  category,
-  operation,
-}: {
-  category: string
-  operation: "sum" | "max" | "mean"
-}) {
+function summarizeData(
+  data: any[],
+  {
+    category,
+    operation,
+  }: {
+    category: string
+    operation: "sum" | "max" | "mean"
+  }
+) {
   console.log(category, operation)
   return operation === "sum"
     ? sum(data, (d) => d[category])
@@ -37,9 +39,16 @@ function summarizeData({
 }
 
 function sortData(
-  category: string,
-  order: "ascending" | "descending",
-  topK = 20
+  data: any[],
+  {
+    category,
+    order,
+    topK = 20,
+  }: {
+    category: string
+    order: "ascending" | "descending"
+    topK?: number
+  }
 ) {
   return data
     .toSorted((a, b) =>
@@ -126,7 +135,9 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           .required(),
         render: async function* ({ category, order }) {
           yield <Spinner />
-          const sorted = sortData(category, order)
+
+          const data = aiState.get().dataset
+          const sorted = sortData(data, { category, order })
           return (
             <BarChart
               data={sorted}
@@ -169,9 +180,11 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
+          const data = aiState.get().dataset
+
           // Update the final AI state.
           aiState.done({
-            dataset: aiState.get().dataset,
+            dataset: data,
             messages: [
               ...aiState.get().messages,
               {
@@ -184,7 +197,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           })
 
           // Return the flight card to the client.
-          return <Chart x={x} y={y} color={color} />
+          return <Chart data={data} x={x} y={y} color={color} />
         },
       },
 
@@ -209,12 +222,13 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
+          const data = aiState.get().dataset
           // Fetch the flight information from an external API.
-          const dataSummary = summarizeData({ category, operation })
+          const dataSummary = summarizeData(data, { category, operation })
 
           // Update the final AI state.
           aiState.done({
-            dataset: aiState.get().dataset,
+            dataset: data,
             messages: [
               ...aiState.get().messages,
               {
@@ -251,7 +265,7 @@ const initialAIState: {
     name?: string
   }[]
 } = {
-  dataset: data,
+  dataset: [],
   messages: [],
 }
 
