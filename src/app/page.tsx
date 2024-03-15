@@ -83,6 +83,8 @@ export default function Page() {
     setAiState({
       ...aiState,
       dataset: file,
+      // make the key the first variable encountered in the dataset by default
+      dataKey: Object.keys(file[0])[0],
     })
   }
 

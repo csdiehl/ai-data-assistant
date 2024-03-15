@@ -7,8 +7,6 @@ import Chart from "./Chart"
 import BarChart from "./BarChart"
 import { sum, max, mean } from "d3-array"
 
-const nameVar = "Name"
-
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
@@ -107,7 +105,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
       // When it's the final content, mark the state as done and ready for the client to access.
       if (done) {
         aiState.done({
-          dataset: aiState.get().dataset,
+          ...aiState.get(),
           messages: [
             ...aiState.get().messages,
             {
@@ -136,13 +134,13 @@ Besides that, you can also chat with users and do some calculations if needed.`,
         render: async function* ({ category, order }) {
           yield <Spinner />
 
-          const data = aiState.get().dataset
-          const sorted = sortData(data, { category, order })
+          const { dataset, dataKey } = aiState.get()
+          const sorted = sortData(dataset, { category, order })
           return (
             <BarChart
               data={sorted}
               x={category}
-              y={nameVar}
+              y={dataKey}
               sortOrder={order}
             />
           )
@@ -184,7 +182,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
 
           // Update the final AI state.
           aiState.done({
-            dataset: data,
+            ...aiState.get(),
             messages: [
               ...aiState.get().messages,
               {
@@ -228,7 +226,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
 
           // Update the final AI state.
           aiState.done({
-            dataset: data,
+            ...aiState.get(),
             messages: [
               ...aiState.get().messages,
               {
@@ -258,6 +256,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
 // Define the initial state of the AI. It can be any JSON object.
 const initialAIState: {
   dataset: any[]
+  dataKey: string
   messages: {
     role: "user" | "assistant" | "system" | "function"
     content: string
@@ -266,6 +265,7 @@ const initialAIState: {
   }[]
 } = {
   dataset: [],
+  dataKey: "Name",
   messages: [],
 }
 
