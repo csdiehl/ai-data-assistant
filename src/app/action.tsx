@@ -5,7 +5,7 @@ import Card from "./Card"
 import Description from "./Description"
 import Chart from "./Chart"
 import BarChart from "./BarChart"
-import { sum, max, mean } from "d3-array"
+import { sum, max, mean, rollups } from "d3-array"
 import defaultData from "./cars.json"
 
 const openai = new OpenAI({
@@ -28,22 +28,41 @@ function unionOfLiterals<T extends string | number>(constants: readonly T[]) {
 }
 
 // An example of a function that fetches flight information from an external API.
+// TODO test this out before you give it to the AI
 function summarizeData(
   data: any[],
   {
     category,
     operation,
+    group,
   }: {
     category: string
-    operation: "sum" | "max" | "mean"
+    operation: "sum" | "max" | "mean" | "count"
+    group?: string
   }
-) {
-  console.log(category, operation)
-  return operation === "sum"
-    ? sum(data, (d) => d[category])
-    : operation === "max"
-    ? max(data, (d) => d[category])
-    : mean(data, (d) => d[category])
+): number | Array<[string, number]> {
+  console.log(category, operation, group)
+
+  const f = (dataset: any[]) => {
+    switch (operation) {
+      case "sum":
+        return sum(dataset, (d) => d[category])
+      case "max":
+        return max(dataset, (d) => d[category])
+      case "mean":
+        return mean(dataset, (d) => d[category])
+      case "count":
+        return dataset.length
+    }
+  }
+
+  return group
+    ? rollups(
+        data,
+        (v) => f(v),
+        (d) => d[group]
+      ).map((d) => ({ category: d[0], value: d[1] }))
+    : f(data)
 }
 
 function sortData(
@@ -92,6 +111,7 @@ async function submitUserMessage(userInput: string) {
   // The `render()` creates a generated, streamable UI.
   const ui = render({
     model: "gpt-3.5-turbo",
+    temperature: 0,
     provider: openai,
     messages: [
       {
@@ -101,9 +121,26 @@ You are a data visualization assistant. Your job is to help the user understand 
 You can summarize data for the user, give them insights about the type of data they have, or generate simple charts for them.  
 
 If the user asks for a general description of the dataset, call \`describe_dataset\`
-If the user uses for a superlative like highest, most, least, or fewest, call \`sort_data\`
-If the user includes terms like mean, sum, maximum or how many - call \`summarize_data\` to give them the results.
-If you need to make a chart to show the relationship between two or more variables, call \`render_chart\`.
+If the user wants to rank the data or uses a superlative like highest, most, least, or fewest, call \`sort_data\`
+If the user wants a summary of the data, for example the average or total for each category, call \`summarize_data\`.
+If you need to make a chart to show the relationship between two or more variables, or how one variable depends on another, call \`render_chart\`.
+
+Here are some examples of queries the user might give you, and the tools you could use to respond: 
+
+---
+user input: what cars have the best horsepower
+tool: \`sort_data\`
+parameters: { category: "Horsepower", order: "descending" }
+
+user input: what is the average horsepower in each country
+tool: \`summarize_data\`
+parameters: { category: "Horsepower", operation: "mean", group: "Origin" }
+
+user input: what is the total horsepower
+tool: \`summarize_data\`
+parameters: { category: "Horsepower", operation: "sum" }
+
+---
 
 If the user wants to complete an impossible task, respond that you are a a work in progress and cannot do that.
 
@@ -217,25 +254,40 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           "Create a summary of the data, grouping one variable by another.",
         parameters: z
           .object({
-            category: z
+            category: cols.describe(
+              "The category by which the user wants to summarize the data."
+            ),
+            operation: z
+              .union([
+                z.literal("sum"),
+                z.literal("max"),
+                z.literal("mean"),
+                z.literal("count"),
+              ])
+              .describe("The type of aggregation the user wants."),
+            group: z.optional(
+              cols.describe(
+                "the variable to group the data by before performing the aggregation. If the user doesn't specify a group, do not include this parameter."
+              )
+            ),
+            description: z
               .string()
               .describe(
-                "The category by which the user wants to summarize the data."
-              ),
-            operation: z
-              .union([z.literal("sum"), z.literal("max"), z.literal("mean")])
-              .describe(
-                "The type of aggregation the user wants. This can be sum, mean, or max."
+                "a short description, no more than a few sentences, that answers the user's question."
               ),
           })
           .required(),
-        render: async function* ({ category, operation }) {
+        render: async function* ({ category, operation, group, description }) {
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
           const data = aiState.get().dataset
-          // Fetch the flight information from an external API.
-          const dataSummary = summarizeData(data, { category, operation })
+          // get a summary of the data using D3
+          const dataSummary = summarizeData(data, {
+            category,
+            operation,
+            group,
+          })
 
           // Update the final AI state.
           aiState.done({
@@ -252,7 +304,14 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           })
 
           // Return the flight card to the client.
-          return (
+          return Array.isArray(dataSummary) ? (
+            <BarChart
+              data={dataSummary}
+              x={"value"}
+              y={"category"}
+              description={description}
+            />
+          ) : (
             <Card category={category} type={operation} answer={dataSummary} />
           )
         },

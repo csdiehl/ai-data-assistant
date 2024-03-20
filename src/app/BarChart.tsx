@@ -10,6 +10,7 @@ interface ChartSpec {
   color?: string
   data: any[]
   sortOrder?: "ascending" | "descending"
+  description?: string
 }
 
 const BarChart = ({
@@ -18,6 +19,7 @@ const BarChart = ({
   y,
   color = "steelblue",
   sortOrder = "ascending",
+  description = "",
 }: ChartSpec) => {
   const container = useRef(null)
 
@@ -42,7 +44,7 @@ const BarChart = ({
   }, [x, y, color, data, sortOrder])
   return (
     <Card>
-      <h2>Top results</h2>
+      <p>{description}</p>
       <ul>
         {data.slice(0, 5).map((d, i) => (
           <Label key={i}>{d["Name"]}</Label>
