@@ -41,8 +41,6 @@ function summarizeData(
     group?: string
   }
 ): number | Array<[string, number]> {
-  console.log(category, operation, group)
-
   const f = (dataset: any[]) => {
     switch (operation) {
       case "sum":
@@ -123,7 +121,13 @@ You can summarize data for the user, give them insights about the type of data t
 If the user asks for a general description of the dataset, call \`describe_dataset\`
 If the user wants to rank the data or uses a superlative like highest, most, least, or fewest, call \`sort_data\`
 If the user wants a summary of the data, for example the average or total for each category, call \`summarize_data\`.
-If you need to make a chart to show the relationship between two or more variables, or how one variable depends on another, call \`render_chart\`.
+If you need to produce a chart, graph or plot, call \`render_chart\`.
+
+You can choose different charts depending on the question.
+-Line charts show how data has changed over time. The time variable should be on the x axis. 
+-Scatter plots show the relationship between two or more variables, or how one variable depends on another.
+-Bar charts show how a numeric variable differs between different categories. 
+-Area charts show change over time for two or more variables that together add up to a whole. 
 
 Here are some examples of queries the user might give you, and the tools you could use to respond: 
 
@@ -139,6 +143,14 @@ parameters: { category: "Horsepower", operation: "mean", group: "Origin" }
 user input: what is the total horsepower
 tool: \`summarize_data\`
 parameters: { category: "Horsepower", operation: "sum" }
+
+user input: How has acceleration changed over time in each country of origin? 
+tool: \`render_chart\`
+parameters: { y: "Acceleration", x: "Year", color: "Origin", type: "line" }
+
+user input: What is the relationship between horsepower and acceleration? 
+tool: \`render_chart\`
+parameters: { y: "Horsepower", x: "Acceleration", type: "scatter" }
 
 ---
 
@@ -215,13 +227,23 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           "Render a chart based on the variables the user has provided.",
         parameters: z
           .object({
+            type: z
+              .union([
+                z.literal("area"),
+                z.literal("line"),
+                z.literal("bar"),
+                z.literal("scatter"),
+              ])
+              .describe("The type of chart to render."),
             x: cols.describe("The x-axis variable."),
             y: cols.describe("The y-axis variable."),
-            color: z
-              .string()
-              .describe(
-                "The color variable. It could be a variable or just a color name."
-              ),
+            color: z.optional(
+              z
+                .string()
+                .describe(
+                  "The color variable. It could be a variable or just a color name."
+                )
+            ),
           })
           .required(),
         render: async function* ({ x, y, color }) {
@@ -275,9 +297,20 @@ Besides that, you can also chat with users and do some calculations if needed.`,
               .describe(
                 "a short description, no more than a few sentences, that answers the user's question."
               ),
+            chartType: z
+              .union([z.literal("bar"), z.literal("line")])
+              .describe(
+                "The type of chart to render, based on the type of variables the user has given."
+              ),
           })
           .required(),
-        render: async function* ({ category, operation, group, description }) {
+        render: async function* ({
+          category,
+          operation,
+          group,
+          description,
+          chartType,
+        }) {
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
@@ -303,12 +336,16 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             ],
           })
 
+          const x = chartType === "bar" ? "value" : "category"
+          const y = chartType === "bar" ? "category" : "value"
+
           // Return the flight card to the client.
           return Array.isArray(dataSummary) ? (
-            <BarChart
+            <Chart
+              type={chartType}
               data={dataSummary}
-              x={"value"}
-              y={"category"}
+              x={x}
+              y={y}
               description={description}
             />
           ) : (
