@@ -26,12 +26,14 @@ const Input = styled.input`
   bottom: 16px;
 `
 
-const Message = styled.div`
+const Message = styled.div<{ aiMessage: boolean }>`
+  ${(props) => props.aiMessage && "align-self: flex-end"};
   border-radius: 8px;
   padding: 8px;
-  background: rgba(18, 18, 18, 0.05);
+  background: #eee;
   margin: 8px 0;
-  max-width: 500px;
+  width: 100%;
+  max-width: ${(props) => (props.aiMessage ? "800px" : "400px")};
   font-size: 1rem;
   line-height: 1.25rem;
 `
@@ -60,6 +62,9 @@ const Submit = styled.button`
 
 const Messages = styled.div`
   margin-bottom: 100px;
+  display: flex;
+  flex-direction: column;
+  max-width: 1000px;
 `
 
 export default function Page() {
@@ -113,8 +118,10 @@ export default function Page() {
           <Messages>
             {
               // View messages in UI state
-              messages.map((message) => (
-                <Message key={message.id}>{message.display}</Message>
+              messages.map((message, i) => (
+                <Message aiMessage={i % 2 !== 0} key={message.id}>
+                  {message.display}
+                </Message>
               ))
             }
           </Messages>

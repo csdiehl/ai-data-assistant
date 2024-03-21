@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect } from "react"
 import * as Plot from "@observablehq/plot"
-import { Card } from "./styles"
+import { Card, Caption } from "./styles"
 
 interface ChartSpec {
   type?: "line" | "bar" | "scatter" | "area"
@@ -11,6 +11,8 @@ interface ChartSpec {
   color?: string
   data: any[]
   description?: string
+  dataKey: string
+  trace?: string // trace shows what the AI put in for the parameters
 }
 
 const Chart = ({
@@ -20,6 +22,8 @@ const Chart = ({
   color = "steelblue",
   type = "scatter",
   description,
+  dataKey,
+  trace,
 }: ChartSpec) => {
   const container = useRef(null)
 
@@ -30,34 +34,38 @@ const Chart = ({
     const plot = Plot.plot({
       marginLeft: 80,
       color: { legend: true },
-      marks: [Mark({ data, x, y, color, type })],
+      marks: Mark({ data, x, y, color, type, dataKey }),
     })
 
     container.current.append(plot)
 
     return () => plot.remove()
-  }, [x, y, color, data, type])
+  }, [x, y, color, data, type, dataKey])
   return (
     <Card>
       {description && <p>{description}</p>}
       <div ref={container}></div>
+      {trace && <Caption>{trace}</Caption>}
     </Card>
   )
 }
 
 // return a different type of chart depending on the request
-function Mark({ x, y, color = "steelblue", type, data }: ChartSpec) {
+function Mark({ x, y, color = "steelblue", type, data, dataKey }: ChartSpec) {
   switch (type) {
     case "line":
-      return Plot.lineY(data, { x, y, stroke: color, sort: x })
+      return [Plot.lineY(data, { x, y, stroke: color, sort: x })]
     case "bar":
-      return Plot.barX(data, { x, y, fill: color })
+      return [Plot.barX(data, { x, y, fill: color })]
     case "scatter":
-      return Plot.dot(data, { x, y, fill: color })
+      return [
+        Plot.dot(data, { x, y, fill: color }),
+        Plot.tip(data, Plot.pointerX({ x: x, y: y, title: (d) => d[dataKey] })),
+      ]
     case "area":
-      return Plot.areaY(data, { x, y, fill: color, sort: x })
+      return [Plot.areaY(data, { x, y, fill: color, sort: x })]
     default:
-      return null
+      return undefined
   }
 }
 

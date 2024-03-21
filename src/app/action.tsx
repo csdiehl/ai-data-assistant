@@ -32,35 +32,35 @@ function unionOfLiterals<T extends string | number>(constants: readonly T[]) {
 function summarizeData(
   data: any[],
   {
-    category,
+    variable,
     operation,
-    group,
+    category,
   }: {
-    category: string
+    variable: string
     operation: "sum" | "max" | "mean" | "count"
-    group?: string
+    category?: string
   }
-): number | Array<[string, number]> {
+): Array<{ category: string; value: number }> {
   const f = (dataset: any[]) => {
     switch (operation) {
       case "sum":
-        return sum(dataset, (d) => d[category])
+        return sum(dataset, (d) => d[variable])
       case "max":
-        return max(dataset, (d) => d[category])
+        return max(dataset, (d) => d[variable])
       case "mean":
-        return mean(dataset, (d) => d[category])
+        return mean(dataset, (d) => d[variable])
       case "count":
         return dataset.length
     }
   }
 
-  return group
+  return category
     ? rollups(
         data,
         (v) => f(v),
-        (d) => d[group]
+        (d) => d[category]
       ).map((d) => ({ category: d[0], value: d[1] }))
-    : f(data)
+    : [{ category: "all", value: f(data) }]
 }
 
 function sortData(
@@ -103,6 +103,12 @@ async function submitUserMessage(userInput: string) {
 
   // Force the ai to use the actual column names, even if the user provides similar-sounding names
   const cols: any = unionOfLiterals(aiState.get().columns)
+  const allowedOperations = z.union([
+    z.literal("sum"),
+    z.literal("max"),
+    z.literal("mean"),
+    z.literal("count"),
+  ])
 
   // const dataset: string = JSON.stringify(aiState.get().dataset)
 
@@ -121,11 +127,11 @@ You can summarize data for the user, give them insights about the type of data t
 If the user asks for a general description of the dataset, call \`describe_dataset\`
 If the user wants to rank the data or uses a superlative like highest, most, least, or fewest, call \`sort_data\`
 If the user wants a summary of the data, for example the average or total for each category, call \`summarize_data\`.
-If you need to produce a chart, graph or plot, call \`render_chart\`.
+If the user wants to know the relationship between two or more numerical variables, call \`describe_relationship\`.
 
 You can choose different charts depending on the question.
 -Line charts show how data has changed over time. The time variable should be on the x axis. 
--Scatter plots show the relationship between two or more variables, or how one variable depends on another.
+-Scatter plots show the relationship between two or more numeric variables, or how one variable depends on another.
 -Bar charts show how a numeric variable differs between different categories. 
 -Area charts show change over time for two or more variables that together add up to a whole. 
 
@@ -138,18 +144,18 @@ parameters: { category: "Horsepower", order: "descending" }
 
 user input: what is the average horsepower in each country
 tool: \`summarize_data\`
-parameters: { category: "Horsepower", operation: "mean", group: "Origin" }
+parameters: { variable: "Horsepower", operation: "mean", category: "Origin" }
 
 user input: what is the total horsepower
 tool: \`summarize_data\`
 parameters: { category: "Horsepower", operation: "sum" }
 
-user input: How has acceleration changed over time in each country of origin? 
-tool: \`render_chart\`
-parameters: { y: "Acceleration", x: "Year", color: "Origin", type: "line" }
+user input: How has average acceleration changed over time? 
+tool: \`summarize_data\`
+parameters: { variable: "Acceleration", category: "Year", operation: "mean",  chartType: line"}
 
 user input: What is the relationship between horsepower and acceleration? 
-tool: \`render_chart\`
+tool: \`describe_relationship\`
 parameters: { y: "Horsepower", x: "Acceleration", type: "scatter" }
 
 ---
@@ -216,33 +222,24 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           const dataset: any[] = aiState.get().dataset
           return (
             <Description
+              data={dataset}
               length={dataset.length}
               vars={Object.keys(dataset[0])}
             />
           )
         },
       },
-      render_chart: {
+      describe_relationship: {
         description:
-          "Render a chart based on the variables the user has provided.",
+          "Describe the relationship between two variables, or how one variable depends on another.",
         parameters: z
           .object({
-            type: z
-              .union([
-                z.literal("area"),
-                z.literal("line"),
-                z.literal("bar"),
-                z.literal("scatter"),
-              ])
-              .describe("The type of chart to render."),
             x: cols.describe("The x-axis variable."),
             y: cols.describe("The y-axis variable."),
             color: z.optional(
-              z
-                .string()
-                .describe(
-                  "The color variable. It could be a variable or just a color name."
-                )
+              cols.describe(
+                "The color variable. It could be a third variable or just a color name."
+              )
             ),
           })
           .required(),
@@ -250,7 +247,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
-          const data = aiState.get().dataset
+          const { dataset: data, dataKey } = aiState.get()
 
           // Update the final AI state.
           aiState.done({
@@ -259,7 +256,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
               ...aiState.get().messages,
               {
                 role: "function",
-                name: "render_chart",
+                name: "describe_relationship",
                 // Content can be any string to provide context to the LLM in the rest of the conversation.
                 content: `scatterplot of ${x} and ${y}`,
               },
@@ -267,7 +264,16 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           })
 
           // Return the flight card to the client.
-          return <Chart data={data} x={x} y={y} color={color} />
+          return (
+            <Chart
+              dataKey={dataKey}
+              type="scatter"
+              data={data}
+              x={x}
+              y={y}
+              color={color}
+            />
+          )
         },
       },
 
@@ -276,20 +282,25 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           "Create a summary of the data, grouping one variable by another.",
         parameters: z
           .object({
-            category: cols.describe(
-              "The category by which the user wants to summarize the data."
+            variable: cols.describe(
+              "The variable by which the user wants to summarize the data."
             ),
-            operation: z
-              .union([
-                z.literal("sum"),
-                z.literal("max"),
-                z.literal("mean"),
-                z.literal("count"),
-              ])
-              .describe("The type of aggregation the user wants."),
-            group: z.optional(
+            operation: allowedOperations.describe(
+              "The type of aggregation the user wants."
+            ),
+            filterCategory: z.optional(
               cols.describe(
-                "the variable to group the data by before performing the aggregation. If the user doesn't specify a group, do not include this parameter."
+                "The category to filter the data by. This is optional"
+              )
+            ),
+            filterValue: z.optional(
+              z
+                .string()
+                .describe("The value to filter the data by. This is optional")
+            ),
+            category: z.optional(
+              cols.describe(
+                "the variable to group the data by before performing the aggregation. If the user doesn't specify a variable to group by, do not include this parameter."
               )
             ),
             description: z
@@ -298,28 +309,38 @@ Besides that, you can also chat with users and do some calculations if needed.`,
                 "a short description, no more than a few sentences, that answers the user's question."
               ),
             chartType: z
-              .union([z.literal("bar"), z.literal("line")])
+              .union([z.literal("bar"), z.literal("line"), z.literal("area")])
               .describe(
                 "The type of chart to render, based on the type of variables the user has given."
               ),
           })
           .required(),
         render: async function* ({
-          category,
+          variable,
           operation,
-          group,
+          category,
           description,
           chartType,
+          filterValue,
+          filterCategory,
         }) {
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
           const data = aiState.get().dataset
+          const dataKey = aiState.get().dataKey
           // get a summary of the data using D3
-          const dataSummary = summarizeData(data, {
-            category,
+
+          // optional data filtering
+          const filteredData =
+            filterCategory && filterValue
+              ? data.filter((d) => d[filterCategory] === filterValue)
+              : data
+
+          const dataSummary = summarizeData(filteredData, {
+            variable,
             operation,
-            group,
+            category,
           })
 
           // Update the final AI state.
@@ -340,16 +361,18 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           const y = chartType === "bar" ? "category" : "value"
 
           // Return the flight card to the client.
-          return Array.isArray(dataSummary) ? (
+          return dataSummary?.length > 1 ? (
             <Chart
+              dataKey={dataKey}
               type={chartType}
               data={dataSummary}
               x={x}
               y={y}
               description={description}
+              trace={`Getting the ${operation} of ${variable} for each ${category}. Filtering ${filterCategory} for ${filterValue}.`}
             />
           ) : (
-            <Card category={category} type={operation} answer={dataSummary} />
+            <Card description={description} answer={dataSummary[0].value} />
           )
         },
       },
@@ -396,5 +419,3 @@ export const AI = createAI({
   initialUIState,
   initialAIState,
 })
-
-// what cars have the most horsepower?

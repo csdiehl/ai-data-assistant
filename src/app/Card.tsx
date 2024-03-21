@@ -4,9 +4,10 @@ import styled from "styled-components"
 
 const Wrapper = styled.div`
   border: 1px solid #ccc;
-  background: #fff;
   padding: 8px;
   border-radius: 8px;
+  width: 100%;
+  max-width: 600px;
 
   h2 {
     margin: 16px 0;
@@ -22,20 +23,16 @@ const Answer = styled.p`
 `
 
 function Card({
-  category,
-  type,
+  description,
   answer,
 }: {
-  category: string
-  type: string
+  description: string
   answer: number
 }) {
   return (
     <Wrapper>
       <h2>{answer.toFixed(1)}</h2>
-      <Answer>
-        is the {type} of {category}
-      </Answer>
+      <Answer>{description}</Answer>
     </Wrapper>
   )
 }
