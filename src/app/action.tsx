@@ -110,7 +110,7 @@ async function submitUserMessage(userInput: string) {
     z.literal("count"),
   ])
 
-  // const dataset: string = JSON.stringify(aiState.get().dataset)
+  const { dataset, dataKey } = aiState.get()
 
   // The `render()` creates a generated, streamable UI.
   const ui = render({
@@ -202,7 +202,6 @@ Besides that, you can also chat with users and do some calculations if needed.`,
         render: async function* ({ category, order }) {
           yield <Spinner />
 
-          const { dataset, dataKey } = aiState.get()
           const sorted = sortData(dataset, { category, order })
           return (
             <BarChart
@@ -219,7 +218,6 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           "Give a general description of the data, including the variables and size of the dataset.",
         parameters: z.object({}).required(),
         render: async function* () {
-          const dataset: any[] = aiState.get().dataset
           return (
             <Description
               data={dataset}
@@ -247,8 +245,6 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
-          const { dataset: data, dataKey } = aiState.get()
-
           // Update the final AI state.
           aiState.done({
             ...aiState.get(),
@@ -268,7 +264,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             <Chart
               dataKey={dataKey}
               type="scatter"
-              data={data}
+              data={dataset}
               x={x}
               y={y}
               color={color}
@@ -327,15 +323,13 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
-          const data = aiState.get().dataset
-          const dataKey = aiState.get().dataKey
           // get a summary of the data using D3
 
           // optional data filtering
           const filteredData =
             filterCategory && filterValue
-              ? data.filter((d) => d[filterCategory] === filterValue)
-              : data
+              ? dataset.filter((d) => d[filterCategory] === filterValue)
+              : dataset
 
           const dataSummary = summarizeData(filteredData, {
             variable,
@@ -360,7 +354,6 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           const x = chartType === "bar" ? "value" : "category"
           const y = chartType === "bar" ? "category" : "value"
 
-          // Return the flight card to the client.
           return dataSummary?.length > 1 ? (
             <Chart
               dataKey={dataKey}
