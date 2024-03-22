@@ -5,8 +5,8 @@ import Card from "./Card"
 import Description from "./Description"
 import Chart from "./Chart"
 import BarChart from "./BarChart"
-import { sum, max, mean, rollups } from "d3-array"
 import defaultData from "./cars.json"
+import { unionOfLiterals, summarizeData, sortData } from "./tools"
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -16,72 +16,6 @@ const openai = new OpenAI({
 // or 3rd party component libraries.
 function Spinner() {
   return <div>Loading...</div>
-}
-
-function unionOfLiterals<T extends string | number>(constants: readonly T[]) {
-  const literals = constants.map((x) => z.literal(x)) as unknown as readonly [
-    z.ZodLiteral<T>,
-    z.ZodLiteral<T>,
-    ...z.ZodLiteral<T>[]
-  ]
-  return z.union(literals)
-}
-
-// An example of a function that fetches flight information from an external API.
-// TODO test this out before you give it to the AI
-function summarizeData(
-  data: any[],
-  {
-    variable,
-    operation,
-    category,
-  }: {
-    variable: string
-    operation: "sum" | "max" | "mean" | "count"
-    category?: string
-  }
-): Array<{ category: string; value: number }> {
-  const f = (dataset: any[]) => {
-    switch (operation) {
-      case "sum":
-        return sum(dataset, (d) => d[variable])
-      case "max":
-        return max(dataset, (d) => d[variable])
-      case "mean":
-        return mean(dataset, (d) => d[variable])
-      case "count":
-        return dataset.length
-    }
-  }
-
-  return category
-    ? rollups(
-        data,
-        (v) => f(v),
-        (d) => d[category]
-      ).map((d) => ({ category: d[0], value: d[1] }))
-    : [{ category: "all", value: f(data) }]
-}
-
-function sortData(
-  data: any[],
-  {
-    category,
-    order,
-    topK = 20,
-  }: {
-    category: string
-    order: "ascending" | "descending"
-    topK?: number
-  }
-) {
-  return data
-    .toSorted((a, b) =>
-      order === "ascending"
-        ? a[category] - b[category]
-        : b[category] - a[category]
-    )
-    .slice(0, topK)
 }
 
 async function submitUserMessage(userInput: string) {
