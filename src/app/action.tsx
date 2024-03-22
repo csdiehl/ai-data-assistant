@@ -111,6 +111,7 @@ async function submitUserMessage(userInput: string) {
   ])
 
   const { dataset, dataKey } = aiState.get()
+  const dataSummary: any[] = aiState.get().dataSummary
 
   // The `render()` creates a generated, streamable UI.
   const ui = render({
@@ -159,6 +160,10 @@ tool: \`describe_relationship\`
 parameters: { y: "Horsepower", x: "Acceleration", type: "scatter" }
 
 ---
+
+This is the data you summarized for the user based on their previous question: 
+${JSON.stringify(dataSummary)}
+You can use it to answer follow-up questions. 
 
 If the user wants to complete an impossible task, respond that you are a a work in progress and cannot do that.
 
@@ -383,6 +388,7 @@ const initialAIState: {
   dataset: any[]
   dataKey: string
   columns: string[]
+  dataSummary: any[]
   messages: {
     role: "user" | "assistant" | "system" | "function"
     content: string
@@ -391,6 +397,7 @@ const initialAIState: {
   }[]
 } = {
   dataset: [],
+  dataSummary: [],
   dataKey: Object.keys(defaultData[0])[0],
   messages: [],
   columns: Object.keys(defaultData[0]),
