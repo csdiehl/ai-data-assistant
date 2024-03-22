@@ -198,7 +198,6 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             ],
           })
 
-          // Return the flight card to the client.
           return (
             <Chart
               dataKey={dataKey}
@@ -262,14 +261,13 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
-          // get a summary of the data using D3
-
           // optional data filtering
           const filteredData =
             filterCategory && filterValue
               ? dataset.filter((d) => d[filterCategory] === filterValue)
               : dataset
 
+          // get a summary of the data using D3
           const dataSummary = summarizeData(filteredData, {
             variable,
             operation,
