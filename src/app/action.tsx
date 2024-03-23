@@ -261,7 +261,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
-          // optional data filtering
+          // optional data filtering - try making this a JS expression
           const filteredData =
             filterCategory && filterValue
               ? dataset.filter((d) => d[filterCategory] === filterValue)
