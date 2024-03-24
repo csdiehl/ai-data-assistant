@@ -18,7 +18,7 @@ async function queryDB(query: string): Promise<any[]> {
   // Open a new connection if there is none
   if (!db) {
     db = await open({
-      filename: process.cwd() + "/src/app/api/titanic.db",
+      filename: process.cwd() + "/titanic.db",
       driver: sqlite3.Database,
     })
   }
