@@ -8,6 +8,26 @@ import BarChart from "./BarChart"
 import defaultData from "./cars.json"
 import { unionOfLiterals, summarizeData, sortData } from "./tools"
 
+// Import the necessary modules for SQLite
+import sqlite3 from "sqlite3"
+import { open } from "sqlite"
+
+let db = null
+
+async function queryDB(query: string): Promise<any[]> {
+  // Open a new connection if there is none
+  if (!db) {
+    db = await open({
+      filename: process.cwd() + "/src/app/api/titanic.db",
+      driver: sqlite3.Database,
+    })
+  }
+
+  // Query to get all todos from the "todo" table
+  const data = await db.all(query)
+  return data
+}
+
 // Fetch the task data from the API when the component is rendered
 
 fetch("http://localhost:3000/api", {
@@ -47,6 +67,9 @@ async function submitUserMessage(userInput: string) {
       },
     ],
   })
+
+  const response = await queryDB("SELECT * FROM titanic LIMIT 5")
+  console.log(response)
 
   // Force the ai to use the actual column names, even if the user provides similar-sounding names
   const cols: any = unionOfLiterals(aiState.get().columns)
