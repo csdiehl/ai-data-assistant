@@ -8,6 +8,22 @@ import BarChart from "./BarChart"
 import defaultData from "./cars.json"
 import { unionOfLiterals, summarizeData, sortData } from "./tools"
 
+// Fetch the task data from the API when the component is rendered
+/**
+
+fetch("http://localhost:3000/api", {
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json",
+  },
+}).then((res) => {
+  res.json().then((data) => {
+    console.log(data)
+  })
+})
+ * 
+ */
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
@@ -19,7 +35,7 @@ function Spinner() {
 }
 
 async function submitUserMessage(userInput: string) {
-  "use server"
+  ;("use server")
 
   const aiState = getMutableAIState<typeof AI>()
 
