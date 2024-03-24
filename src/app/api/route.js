@@ -11,10 +11,12 @@ export async function GET(req, res) {
   // Open a new connection if there is none
   if (!db) {
     db = await open({
-      filename: "./titanic.db",
+      filename: process.cwd() + "/src/app/api/titanic.db",
       driver: sqlite3.Database,
     })
   }
+
+  console.log(process.cwd(), db)
 
   // Query to get all todos from the "todo" table
   const todos = await db.all("SELECT * FROM titanic LIMIT 5")
@@ -27,3 +29,4 @@ export async function GET(req, res) {
 }
 
 // https://howardlee93.medium.com/data-fetching-with-react-server-components-in-nextjs-13-d4448dc591e9
+// https://javascript.plainenglish.io/crud-with-next13-sqlite-1b104d9156c
