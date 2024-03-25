@@ -1,5 +1,6 @@
 const dataConfig = {
   tableName: "cars",
+  topK: 5000,
   dbSchema: `CREATE TABLE [cars] (
   [Name] TEXT,
   [Miles_per_Gallon] REAL NULL,

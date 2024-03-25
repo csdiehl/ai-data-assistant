@@ -93,6 +93,7 @@ export default function Page() {
       columns: Object.keys(file[0]),
       tableName: dataConfig.tableName,
       schema: dataConfig.dbSchema,
+      topK: dataConfig.topK,
     })
   }
 

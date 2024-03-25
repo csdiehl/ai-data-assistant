@@ -88,6 +88,7 @@ async function submitUserMessage(userInput: string) {
   const sampleData: any[] = aiState.get().sampleData
   const dataSummary: any[] = aiState.get().dataSummary
   const dbSchema: string = aiState.get().schema
+  const topK: number = aiState.get().topK
 
   // The `render()` creates a generated, streamable UI.
   const ui = render({
@@ -106,7 +107,7 @@ ${JSON.stringify(sampleData)}
 
 If the user asks a question about the data, create a syntactically correct sqlite3 query to run, using the following schema:
 ${dbSchema}
-Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most 20 results using the LIMIT clause.
+Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most ${topK} results using the LIMIT clause.
 You can order the results by a relevant column to return the most interesting examples in the database.
 Never query for all the columns from a specific table, only ask for a the few relevant columns given the question.
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
@@ -277,6 +278,7 @@ const initialAIState: {
   dataSummary: any[]
   tableName: string
   schema: string
+  topK: number
   messages: {
     role: "user" | "assistant" | "system" | "function"
     content: string
@@ -291,6 +293,7 @@ const initialAIState: {
   columns: [],
   tableName: "",
   schema: "",
+  topK: 5000,
 }
 
 // The initial UI state that the client will keep track of, which contains the message IDs and their UI nodes.
