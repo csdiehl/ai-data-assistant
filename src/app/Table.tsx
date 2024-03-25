@@ -44,8 +44,6 @@ const Table = ({
   //@ts-ignore
   const highest = max(data, (d) => d[xVar])
 
-  console.log("highest", highest)
-
   return (
     <Card>
       <h2>{title}</h2>
@@ -79,7 +77,7 @@ const Table = ({
         })}
       </TableContainer>
       <Caption>
-        <strong>{xVar} Query:</strong> {query}
+        <strong>Query:</strong> {query}
       </Caption>
     </Card>
   )

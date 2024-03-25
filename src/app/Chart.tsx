@@ -13,6 +13,7 @@ interface ChartSpec {
   description?: string
   dataKey: string
   trace?: string // trace shows what the AI put in for the parameters
+  query?: string
 }
 
 const Chart = ({
@@ -23,13 +24,15 @@ const Chart = ({
   type = "scatter",
   description,
   dataKey,
-  trace,
+  query,
 }: ChartSpec) => {
   const container = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!container.current) return
     const plot = Plot.plot({
+      y: { grid: true },
+      x: { grid: true },
       marginLeft: 80,
       color: { legend: true },
       marks: Mark({ data, x, y, color, type, dataKey }),
@@ -43,7 +46,7 @@ const Chart = ({
     <Card>
       {description && <p>{description}</p>}
       <div ref={container}></div>
-      {trace && <Caption>{trace}</Caption>}
+      {query && <Caption>{query}</Caption>}
     </Card>
   )
 }
@@ -52,7 +55,11 @@ const Chart = ({
 function Mark({ x, y, color = "steelblue", type, data, dataKey }: ChartSpec) {
   switch (type) {
     case "line":
-      return [Plot.lineY(data, { x, y, stroke: color, sort: x })]
+      return [
+        Plot.axisX({ anchor: "bottom", ticks: 5 }),
+        Plot.lineY(data, { x, y, stroke: color, sort: x }),
+        Plot.dot(data, { x, y, fill: color, sort: x }),
+      ]
     case "scatter":
       return [
         Plot.dot(data, { x, y, fill: color }),

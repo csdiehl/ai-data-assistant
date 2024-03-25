@@ -6,6 +6,8 @@ export const Card = styled.div`
 
   h2 {
     margin: 16px 0;
+    font-size: 1.2rem;
+    line-height: 1.5rem;
   }
 `
 export const Label = styled.li`

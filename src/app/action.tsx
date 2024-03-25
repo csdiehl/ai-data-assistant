@@ -255,6 +255,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
               y={y}
               color={color}
               description={title}
+              query={query}
             />
           )
         },

@@ -8,7 +8,7 @@ import dataConfig from "./dataConfig"
 
 const App = styled.div`
   background: #f5f5f5;
-  color: black;
+  color: #333;
   height: 100vh;
   padding: 16px;
   overflow-y: scroll;
