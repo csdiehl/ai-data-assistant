@@ -59,7 +59,7 @@ function Description({
 }
 
 function BoxPlot({ data }: { data: number[] }) {
-  const container = useRef(null)
+  const container = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!container.current) return

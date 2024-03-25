@@ -1,18 +1,90 @@
 import { OpenAI } from "openai"
 import { createAI, getMutableAIState, render } from "ai/rsc"
 import { z } from "zod"
-import Card from "./Card"
 import Description from "./Description"
 import Chart from "./Chart"
-import BarChart from "./BarChart"
 import defaultData from "./cars.json"
-import { unionOfLiterals, summarizeData, sortData } from "./tools"
+import { unionOfLiterals } from "./tools"
+import Table from "./Table"
+
+const dbSchema = `CREATE TABLE titanic("PassengerId" TEXT,
+  "Survived" TEXT,
+  "Pclass" TEXT,
+  "Name" TEXT,
+  "Sex" TEXT,
+  "Age" TEXT,
+  "SibSp" TEXT,
+  "Parch" TEXT,
+  "Ticket" TEXT,
+  "Fare" TEXT,
+  "Cabin" TEXT,
+  "Embarked" TEXT
+);`
+
+const exampleData = [
+  {
+    PassengerId: "2",
+    Survived: "1",
+    Pclass: "1",
+    Name: "Cumings, Mrs. John Bradley (Florence Briggs Thayer)",
+    Sex: "female",
+    Age: 38,
+    SibSp: "1",
+    Parch: "0",
+    Ticket: "PC 17599",
+    Fare: 71.2833,
+    Cabin: "C85",
+    Embarked: "C",
+  },
+  {
+    PassengerId: "3",
+    Survived: "1",
+    Pclass: "3",
+    Name: "Heikkinen, Miss. Laina",
+    Sex: "female",
+    Age: 26,
+    SibSp: "0",
+    Parch: "0",
+    Ticket: "STON/O2. 3101282",
+    Fare: 7.925,
+    Cabin: null,
+    Embarked: "S",
+  },
+  {
+    PassengerId: "4",
+    Survived: "1",
+    Pclass: "1",
+    Name: "Futrelle, Mrs. Jacques Heath (Lily May Peel)",
+    Sex: "female",
+    Age: 35,
+    SibSp: "1",
+    Parch: "0",
+    Ticket: "113803",
+    Fare: 53.1,
+    Cabin: "C123",
+    Embarked: "S",
+  },
+  {
+    PassengerId: "5",
+    Survived: "0",
+    Pclass: "3",
+    Name: "Allen, Mr. William Henry",
+    Sex: "male",
+    Age: 35,
+    SibSp: "0",
+    Parch: "0",
+    Ticket: "373450",
+    Fare: 8.05,
+    Cabin: null,
+    Embarked: "S",
+  },
+]
 
 // Import the necessary modules for SQLite
 import sqlite3 from "sqlite3"
 import { open } from "sqlite"
 
-let db = null
+let db: any = null
 
 async function queryDB(query: string): Promise<any[]> {
   // Open a new connection if there is none
@@ -27,19 +99,6 @@ async function queryDB(query: string): Promise<any[]> {
   const data = await db.all(query)
   return data
 }
-
-// Fetch the task data from the API when the component is rendered
-
-fetch("http://localhost:3000/api", {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-  },
-}).then((res) => {
-  res.json().then((data) => {
-    console.log(data)
-  })
-})
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -68,17 +127,8 @@ async function submitUserMessage(userInput: string) {
     ],
   })
 
-  const response = await queryDB("SELECT * FROM titanic LIMIT 5")
-  console.log(response)
-
   // Force the ai to use the actual column names, even if the user provides similar-sounding names
   const cols: any = unionOfLiterals(aiState.get().columns)
-  const allowedOperations = z.union([
-    z.literal("sum"),
-    z.literal("max"),
-    z.literal("mean"),
-    z.literal("count"),
-  ])
 
   const { dataset, dataKey } = aiState.get()
   const dataSummary: any[] = aiState.get().dataSummary
@@ -93,47 +143,25 @@ async function submitUserMessage(userInput: string) {
         role: "system",
         content: `\
 You are a data visualization assistant. Your job is to help the user understand a dataset that they have.
-You can summarize data for the user, give them insights about the type of data they have, or generate simple charts for them.  
+You can summarize data for the user, give them insights about the type of data they have, or generate simple charts for them. 
 
-If the user asks for a general description of the dataset, call \`describe_dataset\`
-If the user wants to rank the data or uses a superlative like highest, most, least, or fewest, call \`sort_data\`
-If the user wants a summary of the data, for example the average or total for each category, call \`summarize_data\`.
-If the user wants to know the relationship between two or more numerical variables, call \`describe_relationship\`.
+Here is a sample of the dataset:
+${JSON.stringify(exampleData)}
+
+If the user asks a question about the data, create a syntactically correct sqlite3 query to run, using the following schema:
+${dbSchema}
+Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most 20 results using the LIMIT clause.
+You can order the results by a relevant column to return the most interesting examples in the database.
+Never query for all the columns from a specific table, only ask for a the few relevant columns given the question.
+DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
+To use your query to interact with the database, call \`summarize_data\`. 
 
 You can choose different charts depending on the question.
 -Line charts show how data has changed over time. The time variable should be on the x axis. 
 -Scatter plots show the relationship between two or more numeric variables, or how one variable depends on another.
 -Bar charts show how a numeric variable differs between different categories. 
+For a horizontal bar chart the numeric variable should be on the x axis and the category on the y axis. For a vertical bar chart it should be the reverse.
 -Area charts show change over time for two or more variables that together add up to a whole. 
-
-Here are some examples of queries the user might give you, and the tools you could use to respond: 
-
----
-user input: what cars have the best horsepower
-tool: \`sort_data\`
-parameters: { category: "Horsepower", order: "descending" }
-
-user input: what is the average horsepower in each country
-tool: \`summarize_data\`
-parameters: { variable: "Horsepower", operation: "mean", category: "Origin" }
-
-user input: what is the total horsepower
-tool: \`summarize_data\`
-parameters: { category: "Horsepower", operation: "sum" }
-
-user input: How has average acceleration changed over time? 
-tool: \`summarize_data\`
-parameters: { variable: "Acceleration", category: "Year", operation: "mean",  chartType: line"}
-
-user input: What is the relationship between horsepower and acceleration? 
-tool: \`describe_relationship\`
-parameters: { y: "Horsepower", x: "Acceleration", type: "scatter" }
-
----
-
-This is the data you summarized for the user based on their previous question: 
-${JSON.stringify(dataSummary)}
-You can use it to answer follow-up questions. 
 
 If the user wants to complete an impossible task, respond that you are a a work in progress and cannot do that.
 
@@ -162,32 +190,6 @@ Besides that, you can also chat with users and do some calculations if needed.`,
       return <p>{content}</p>
     },
     tools: {
-      sort_data: {
-        description: "Sort the data by a variable.",
-        parameters: z
-          .object({
-            category: cols.describe("The variable to sort by."),
-            order: z
-              .union([z.literal("ascending"), z.literal("descending")])
-              .describe(
-                "Whether to sort the data by biggest first (descending) or smallest first (ascending)."
-              ),
-          })
-          .required(),
-        render: async function* ({ category, order }) {
-          yield <Spinner />
-
-          const sorted = sortData(dataset, { category, order })
-          return (
-            <BarChart
-              data={sorted}
-              x={category}
-              y={dataKey}
-              sortOrder={order}
-            />
-          )
-        },
-      },
       describe_dataset: {
         description:
           "Give a general description of the data, including the variables and size of the dataset.",
@@ -252,63 +254,28 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           "Create a summary of the data, grouping one variable by another.",
         parameters: z
           .object({
-            variable: cols.describe(
-              "The variable by which the user wants to summarize the data."
-            ),
-            operation: allowedOperations.describe(
-              "The type of aggregation the user wants."
-            ),
-            filterCategory: z.optional(
-              cols.describe(
-                "The category to filter the data by. This is optional"
-              )
-            ),
-            filterValue: z.optional(
-              z
-                .string()
-                .describe("The value to filter the data by. This is optional")
-            ),
-            category: z.optional(
-              cols.describe(
-                "the variable to group the data by before performing the aggregation. If the user doesn't specify a variable to group by, do not include this parameter."
-              )
-            ),
-            description: z
+            query: z
               .string()
-              .describe(
-                "a short description, no more than a few sentences, that answers the user's question."
-              ),
-            chartType: z
-              .union([z.literal("bar"), z.literal("line"), z.literal("area")])
-              .describe(
-                "The type of chart to render, based on the type of variables the user has given."
-              ),
+              .describe("The sqlite3 query that answers the user's question."),
+            chartSpec: z.object({
+              x: z
+                .string()
+                .describe(
+                  "The variable that is being averaged, summed or counted in the query."
+                ),
+              title: z
+                .string()
+                .describe(
+                  "A brief title for a chart that shows the results of the query"
+                ),
+            }),
           })
           .required(),
-        render: async function* ({
-          variable,
-          operation,
-          category,
-          description,
-          chartType,
-          filterValue,
-          filterCategory,
-        }) {
+        render: async function* ({ query, chartSpec }) {
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
 
-          // optional data filtering - try making this a JS expression
-          const filteredData =
-            filterCategory && filterValue
-              ? dataset.filter((d) => d[filterCategory] === filterValue)
-              : dataset
-
-          // get a summary of the data using D3
-          const dataSummary = summarizeData(filteredData, {
-            variable,
-            operation,
-            category,
-          })
+          const response = await queryDB(query)
 
           // Update the final AI state.
           aiState.done({
@@ -324,22 +291,9 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             ],
           })
 
-          const x = chartType === "bar" ? "value" : "category"
-          const y = chartType === "bar" ? "category" : "value"
+          const { x, title } = chartSpec
 
-          return dataSummary?.length > 1 ? (
-            <Chart
-              dataKey={dataKey}
-              type={chartType}
-              data={dataSummary}
-              x={x}
-              y={y}
-              description={description}
-              trace={`Getting the ${operation} of ${variable} for each ${category}. Filtering ${filterCategory} for ${filterValue}.`}
-            />
-          ) : (
-            <Card description={description} answer={dataSummary[0].value} />
-          )
+          return <Table data={response} title={title} query={query} xVar={x} />
         },
       },
     },
@@ -387,3 +341,18 @@ export const AI = createAI({
   initialUIState,
   initialAIState,
 })
+
+/**
+ * 
+ *  type: z
+                .union([
+                  z.literal("horizontal bar"),
+                  z.literal("vertical bar"),
+                  z.literal("scatter"),
+                  z.literal("line"),
+                  z.literal("area"),
+                ])
+                .describe(
+                  "The type of chart to render to show the results of the query, based on the type of variables the user has given."
+                ),
+ */

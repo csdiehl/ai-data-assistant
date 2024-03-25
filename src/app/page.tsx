@@ -94,8 +94,6 @@ export default function Page() {
     })
   }
 
-  console.log(aiState.dataset)
-
   const noData = !aiState?.dataset || aiState.dataset.length === 0
 
   return (
