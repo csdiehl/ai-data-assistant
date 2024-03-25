@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useUIState, useActions, useAIState } from "ai/rsc"
 import type { AI } from "./action"
 import styled from "styled-components"
-import defaultData from "./cars.json"
+import defaultData from "./defaultData.json"
 
 const App = styled.div`
   background: #f5f5f5;
@@ -26,14 +26,14 @@ const Input = styled.input`
   bottom: 16px;
 `
 
-const Message = styled.div<{ aiMessage: boolean }>`
-  ${(props) => props.aiMessage && "align-self: flex-end"};
+const Message = styled.div<{ $aiMessage: boolean }>`
+  ${(props) => props.$aiMessage && "align-self: flex-end"};
   border-radius: 8px;
   padding: 8px;
   background: #eee;
   margin: 8px 0;
   width: 100%;
-  max-width: ${(props) => (props.aiMessage ? "800px" : "400px")};
+  max-width: ${(props) => (props.$aiMessage ? "800px" : "400px")};
   font-size: 1rem;
   line-height: 1.25rem;
 `
@@ -87,19 +87,20 @@ export default function Page() {
     // if successful, update the data
     setAiState({
       ...aiState,
-      dataset: file,
+      sampleData: file.slice(0, 3),
       // make the key the first variable encountered in the dataset by default
       dataKey: Object.keys(file[0])[0],
       columns: Object.keys(file[0]),
+      tableName: "titanic",
     })
   }
 
-  const noData = !aiState?.dataset || aiState.dataset.length === 0
+  const noData = !aiState?.sampleData || aiState.sampleData.length === 0
 
   return (
     <App>
       {file === defaultData && (
-        <h3>No data uploaded. Using the example cars dataset.</h3>
+        <h3>No data uploaded. Using the example titanic dataset.</h3>
       )}
       {noData ? (
         <UploadForm>
@@ -117,7 +118,7 @@ export default function Page() {
             {
               // View messages in UI state
               messages.map((message, i) => (
-                <Message aiMessage={i % 2 !== 0} key={message.id}>
+                <Message $aiMessage={i % 2 !== 0} key={message.id}>
                   {message.display}
                 </Message>
               ))

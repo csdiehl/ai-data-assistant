@@ -3,9 +3,11 @@ import { createAI, getMutableAIState, render } from "ai/rsc"
 import { z } from "zod"
 import Description from "./Description"
 import Chart from "./Chart"
-import defaultData from "./cars.json"
 import { unionOfLiterals } from "./tools"
 import Table from "./Table"
+// Import the necessary modules for SQLite
+import sqlite3 from "sqlite3"
+import { open } from "sqlite"
 
 const dbSchema = `CREATE TABLE titanic("PassengerId" TEXT,
   "Survived" TEXT,
@@ -20,69 +22,6 @@ const dbSchema = `CREATE TABLE titanic("PassengerId" TEXT,
   "Cabin" TEXT,
   "Embarked" TEXT
 );`
-
-const exampleData = [
-  {
-    PassengerId: "2",
-    Survived: "1",
-    Pclass: "1",
-    Name: "Cumings, Mrs. John Bradley (Florence Briggs Thayer)",
-    Sex: "female",
-    Age: 38,
-    SibSp: "1",
-    Parch: "0",
-    Ticket: "PC 17599",
-    Fare: 71.2833,
-    Cabin: "C85",
-    Embarked: "C",
-  },
-  {
-    PassengerId: "3",
-    Survived: "1",
-    Pclass: "3",
-    Name: "Heikkinen, Miss. Laina",
-    Sex: "female",
-    Age: 26,
-    SibSp: "0",
-    Parch: "0",
-    Ticket: "STON/O2. 3101282",
-    Fare: 7.925,
-    Cabin: null,
-    Embarked: "S",
-  },
-  {
-    PassengerId: "4",
-    Survived: "1",
-    Pclass: "1",
-    Name: "Futrelle, Mrs. Jacques Heath (Lily May Peel)",
-    Sex: "female",
-    Age: 35,
-    SibSp: "1",
-    Parch: "0",
-    Ticket: "113803",
-    Fare: 53.1,
-    Cabin: "C123",
-    Embarked: "S",
-  },
-  {
-    PassengerId: "5",
-    Survived: "0",
-    Pclass: "3",
-    Name: "Allen, Mr. William Henry",
-    Sex: "male",
-    Age: 35,
-    SibSp: "0",
-    Parch: "0",
-    Ticket: "373450",
-    Fare: 8.05,
-    Cabin: null,
-    Embarked: "S",
-  },
-]
-
-// Import the necessary modules for SQLite
-import sqlite3 from "sqlite3"
-import { open } from "sqlite"
 
 let db: any = null
 
@@ -127,10 +66,37 @@ async function submitUserMessage(userInput: string) {
     ],
   })
 
+  // metadata that is needed to answer queries
+  const { dataKey, tableName, columns } = aiState.get()
   // Force the ai to use the actual column names, even if the user provides similar-sounding names
-  const cols: any = unionOfLiterals(aiState.get().columns)
+  const cols: any = unionOfLiterals(columns)
 
-  const { dataset, dataKey } = aiState.get()
+  const chartSpecification = z.object({
+    type: z
+      .union([
+        z.literal("bar"),
+        z.literal("scatter"),
+        z.literal("line"),
+        z.literal("area"),
+      ])
+      .describe(
+        "The type of chart to render to show the results of the query, based on the type of variables the user has given."
+      ),
+    x: cols.describe("The x-axis variable."),
+    y: cols.describe("The y-axis variable."),
+    color: z.optional(
+      cols.describe(
+        "The color variable. It could be a third variable or just a color name. Optional."
+      )
+    ),
+    title: z
+      .string()
+      .describe(
+        "A brief title for a chart that shows the results of the query"
+      ),
+  })
+
+  const sampleData: any[] = aiState.get().sampleData
   const dataSummary: any[] = aiState.get().dataSummary
 
   // The `render()` creates a generated, streamable UI.
@@ -146,7 +112,7 @@ You are a data visualization assistant. Your job is to help the user understand 
 You can summarize data for the user, give them insights about the type of data they have, or generate simple charts for them. 
 
 Here is a sample of the dataset:
-${JSON.stringify(exampleData)}
+${JSON.stringify(sampleData)}
 
 If the user asks a question about the data, create a syntactically correct sqlite3 query to run, using the following schema:
 ${dbSchema}
@@ -155,6 +121,9 @@ You can order the results by a relevant column to return the most interesting ex
 Never query for all the columns from a specific table, only ask for a the few relevant columns given the question.
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 To use your query to interact with the database, call \`summarize_data\`. 
+
+If the user just wants a general description of the dataset, call \`describe_data\`.
+If the user just wants to show the general relationship between two or more variables, call \`describe_relationship\`
 
 You can choose different charts depending on the question.
 -Line charts show how data has changed over time. The time variable should be on the x axis. 
@@ -195,32 +164,27 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           "Give a general description of the data, including the variables and size of the dataset.",
         parameters: z.object({}).required(),
         render: async function* () {
+          const allData = await queryDB(`SELECT * FROM ${tableName};`)
           return (
             <Description
-              data={dataset}
-              length={dataset.length}
-              vars={Object.keys(dataset[0])}
+              data={allData}
+              length={allData.length}
+              vars={columns}
             />
           )
         },
       },
       describe_relationship: {
         description:
-          "Describe the relationship between two variables, or how one variable depends on another.",
-        parameters: z
-          .object({
-            x: cols.describe("The x-axis variable."),
-            y: cols.describe("The y-axis variable."),
-            color: z.optional(
-              cols.describe(
-                "The color variable. It could be a third variable or just a color name."
-              )
-            ),
-          })
-          .required(),
-        render: async function* ({ x, y, color }) {
+          "Describe the relationship between two variables, or how one depends on another.",
+        parameters: chartSpecification,
+        render: async function* ({ x, y, color, title }) {
           // Show a spinner on the client while we wait for the response.
           yield <Spinner />
+
+          const chartData = await queryDB(
+            `SELECT ${x}, ${y} from ${tableName} LIMIT 5000`
+          )
 
           // Update the final AI state.
           aiState.done({
@@ -236,14 +200,21 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             ],
           })
 
+          // fix string types to number - super temporary hack. TODO: change this in the upload
+          chartData.forEach((d) => {
+            d[x] = +d[x]
+            d[y] = +d[y]
+          })
+
           return (
             <Chart
               dataKey={dataKey}
               type="scatter"
-              data={dataset}
+              data={chartData}
               x={x}
               y={y}
               color={color}
+              description={title}
             />
           )
         },
@@ -257,18 +228,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             query: z
               .string()
               .describe("The sqlite3 query that answers the user's question."),
-            chartSpec: z.object({
-              x: z
-                .string()
-                .describe(
-                  "The variable that is being averaged, summed or counted in the query."
-                ),
-              title: z
-                .string()
-                .describe(
-                  "A brief title for a chart that shows the results of the query"
-                ),
-            }),
+            chartSpec: chartSpecification,
           })
           .required(),
         render: async function* ({ query, chartSpec }) {
@@ -291,9 +251,22 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             ],
           })
 
-          const { x, title } = chartSpec
+          const { x, y, title, type, color } = chartSpec
 
-          return <Table data={response} title={title} query={query} xVar={x} />
+          // TODO: passing in the y variable seems to work ok for now, but should make this more robust
+          return type === "bar" ? (
+            <Table data={response} title={title} query={query} xVar={y} />
+          ) : (
+            <Chart
+              type={type}
+              data={response}
+              dataKey={dataKey}
+              x={x}
+              y={y}
+              color={color}
+              description={title}
+            />
+          )
         },
       },
     },
@@ -307,10 +280,11 @@ Besides that, you can also chat with users and do some calculations if needed.`,
 
 // Define the initial state of the AI. It can be any JSON object.
 const initialAIState: {
-  dataset: any[]
+  sampleData: any[]
   dataKey: string
   columns: string[]
   dataSummary: any[]
+  tableName: string
   messages: {
     role: "user" | "assistant" | "system" | "function"
     content: string
@@ -318,11 +292,12 @@ const initialAIState: {
     name?: string
   }[]
 } = {
-  dataset: [],
+  sampleData: [],
   dataSummary: [],
-  dataKey: Object.keys(defaultData[0])[0],
+  dataKey: "",
   messages: [],
-  columns: Object.keys(defaultData[0]),
+  columns: [],
+  tableName: "",
 }
 
 // The initial UI state that the client will keep track of, which contains the message IDs and their UI nodes.
@@ -341,18 +316,3 @@ export const AI = createAI({
   initialUIState,
   initialAIState,
 })
-
-/**
- * 
- *  type: z
-                .union([
-                  z.literal("horizontal bar"),
-                  z.literal("vertical bar"),
-                  z.literal("scatter"),
-                  z.literal("line"),
-                  z.literal("area"),
-                ])
-                .describe(
-                  "The type of chart to render to show the results of the query, based on the type of variables the user has given."
-                ),
- */

@@ -5,7 +5,7 @@ import * as Plot from "@observablehq/plot"
 import { Card, Caption } from "./styles"
 
 interface ChartSpec {
-  type?: "line" | "vertical bar" | "horizontal bar" | "scatter" | "area"
+  type?: "line" | "scatter" | "area"
   x: string
   y: string
   color?: string
@@ -53,10 +53,6 @@ function Mark({ x, y, color = "steelblue", type, data, dataKey }: ChartSpec) {
   switch (type) {
     case "line":
       return [Plot.lineY(data, { x, y, stroke: color, sort: x })]
-    case "vertical bar":
-      return [Plot.barY(data, { x, y, fill: color })]
-    case "horizontal bar":
-      return [Plot.barX(data, { x, y, fill: color })]
     case "scatter":
       return [
         Plot.dot(data, { x, y, fill: color }),

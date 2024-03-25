@@ -1,0 +1,58 @@
+[
+  {
+    "PassengerId": "2",
+    "Survived": "1",
+    "Pclass": "1",
+    "Name": "Cumings, Mrs. John Bradley (Florence Briggs Thayer)",
+    "Sex": "female",
+    "Age": 38,
+    "SibSp": "1",
+    "Parch": "0",
+    "Ticket": "PC 17599",
+    "Fare": 71.2833,
+    "Cabin": "C85",
+    "Embarked": "C"
+  },
+  {
+    "PassengerId": "3",
+    "Survived": "1",
+    "Pclass": "3",
+    "Name": "Heikkinen, Miss. Laina",
+    "Sex": "female",
+    "Age": 26,
+    "SibSp": "0",
+    "Parch": "0",
+    "Ticket": "STON/O2. 3101282",
+    "Fare": 7.925,
+    "Cabin": null,
+    "Embarked": "S"
+  },
+  {
+    "PassengerId": "4",
+    "Survived": "1",
+    "Pclass": "1",
+    "Name": "Futrelle, Mrs. Jacques Heath (Lily May Peel)",
+    "Sex": "female",
+    "Age": 35,
+    "SibSp": "1",
+    "Parch": "0",
+    "Ticket": "113803",
+    "Fare": 53.1,
+    "Cabin": "C123",
+    "Embarked": "S"
+  },
+  {
+    "PassengerId": "5",
+    "Survived": "0",
+    "Pclass": "3",
+    "Name": "Allen, Mr. William Henry",
+    "Sex": "male",
+    "Age": 35,
+    "SibSp": "0",
+    "Parch": "0",
+    "Ticket": "373450",
+    "Fare": 8.05,
+    "Cabin": null,
+    "Embarked": "S"
+  }
+]
