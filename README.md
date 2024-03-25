@@ -1,8 +1,10 @@
-This is a generative AI assistant for helping you understand a new dataset. You can upload a dataset and chat with it. Here are some things it can do:
+This is a generative AI assistant for helping you understand a new dataset. You can upload a SQLite database and chat with it. Here are some things it can do:
 
 - Make basic charts
 - Give you summary statistics based on free-form prompts
 - Give you general descriptions of the dataset
+
+It uses a sqlite database for data storage, and Vercel's AI SDK for generative UI.
 
 ![image](./ai_scatter_example.png)
 
