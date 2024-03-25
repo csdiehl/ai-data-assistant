@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useUIState, useActions, useAIState } from "ai/rsc"
 import type { AI } from "./action"
 import styled from "styled-components"
-import defaultData from "./defaultData.json"
+import dataConfig from "./dataConfig"
 
 const App = styled.div`
   background: #f5f5f5;
@@ -73,7 +73,7 @@ export default function Page() {
   const { submitUserMessage } = useActions<typeof AI>()
 
   const [aiState, setAiState] = useAIState()
-  const [file, setFile] = useState<any[] | null>(defaultData)
+  const [file, setFile] = useState<any[] | null>(dataConfig.sampleData)
 
   function handleChange(e: any) {
     new Response(e.target.files[0]).json().then((data) => {
@@ -91,7 +91,8 @@ export default function Page() {
       // make the key the first variable encountered in the dataset by default
       dataKey: Object.keys(file[0])[0],
       columns: Object.keys(file[0]),
-      tableName: "titanic",
+      tableName: dataConfig.tableName,
+      schema: dataConfig.dbSchema,
     })
   }
 
@@ -99,12 +100,13 @@ export default function Page() {
 
   return (
     <App>
-      {file === defaultData && (
-        <h3>No data uploaded. Using the example titanic dataset.</h3>
+      {file === dataConfig.sampleData && (
+        <h3>Using the example {dataConfig.tableName} dataset.</h3>
       )}
       {noData ? (
         <UploadForm>
           <h2>To chat with the AI you need some data!</h2>
+          <p>Current dataset: {dataConfig.tableName}</p>
           <form>
             <input type="file" onChange={handleChange} />
             <Submit type="submit" onClick={handleSubmit}>

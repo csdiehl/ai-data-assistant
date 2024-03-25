@@ -9,19 +9,8 @@ import Table from "./Table"
 import sqlite3 from "sqlite3"
 import { open } from "sqlite"
 
-const dbSchema = `CREATE TABLE titanic("PassengerId" TEXT,
-  "Survived" TEXT,
-  "Pclass" TEXT,
-  "Name" TEXT,
-  "Sex" TEXT,
-  "Age" TEXT,
-  "SibSp" TEXT,
-  "Parch" TEXT,
-  "Ticket" TEXT,
-  "Fare" TEXT,
-  "Cabin" TEXT,
-  "Embarked" TEXT
-);`
+// get table names
+// select name from sqlite_master where type='table'
 
 let db: any = null
 
@@ -29,7 +18,7 @@ async function queryDB(query: string): Promise<any[]> {
   // Open a new connection if there is none
   if (!db) {
     db = await open({
-      filename: process.cwd() + "/titanic.db",
+      filename: process.cwd() + "/exampleData/cars.db",
       driver: sqlite3.Database,
     })
   }
@@ -98,6 +87,7 @@ async function submitUserMessage(userInput: string) {
 
   const sampleData: any[] = aiState.get().sampleData
   const dataSummary: any[] = aiState.get().dataSummary
+  const dbSchema: string = aiState.get().schema
 
   // The `render()` creates a generated, streamable UI.
   const ui = render({
@@ -285,6 +275,7 @@ const initialAIState: {
   columns: string[]
   dataSummary: any[]
   tableName: string
+  schema: string
   messages: {
     role: "user" | "assistant" | "system" | "function"
     content: string
@@ -298,6 +289,7 @@ const initialAIState: {
   messages: [],
   columns: [],
   tableName: "",
+  schema: "",
 }
 
 // The initial UI state that the client will keep track of, which contains the message IDs and their UI nodes.
