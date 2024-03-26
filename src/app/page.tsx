@@ -67,10 +67,12 @@ const Messages = styled.div`
   max-width: 1000px;
 `
 
+// "/exampleData/cars.db"
+
 export default function Page() {
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useUIState<typeof AI>()
-  const { submitUserMessage } = useActions<typeof AI>()
+  const { submitUserMessage, setupDB } = useActions<typeof AI>()
 
   const [aiState, setAiState] = useAIState()
   const [file, setFile] = useState<any[] | null>(dataConfig.sampleData)
@@ -85,16 +87,7 @@ export default function Page() {
     e.preventDefault()
     if (!file) return
     // if successful, update the data
-    setAiState({
-      ...aiState,
-      sampleData: file.slice(0, 3),
-      // make the key the first variable encountered in the dataset by default
-      dataKey: Object.keys(file[0])[0],
-      columns: Object.keys(file[0]),
-      tableName: dataConfig.tableName,
-      schema: dataConfig.dbSchema,
-      topK: dataConfig.topK,
-    })
+    setupDB("Cars.db")
   }
 
   const noData = !aiState?.sampleData || aiState.sampleData.length === 0

@@ -8,19 +8,51 @@ import Table from "./Table"
 // Import the necessary modules for SQLite
 import sqlite3 from "sqlite3"
 import { open } from "sqlite"
-
-// get table names
-// select name from sqlite_master where type='table'
+import { error } from "console"
+import dataConfig from "./dataConfig"
 
 let db: any = null
+
+async function setupDB(fileName: string) {
+  "use server"
+
+  const path = `${process.cwd()}/exampleData/${fileName}`
+
+  // Open a new connection if there is none
+  if (!db) {
+    db = await open({
+      filename: path,
+      driver: sqlite3.Database,
+    })
+  }
+
+  const tables = await queryDB(
+    "select name from sqlite_master where type='table'"
+  )
+
+  const firstTable = tables[0].name
+  const sampleData = await queryDB(`SELECT * FROM ${firstTable} LIMIT 3`)
+
+  const columns = Object.keys(sampleData[0])
+  const dataKey = columns[0]
+
+  const aiState = getMutableAIState<typeof AI>()
+
+  aiState.done({
+    ...aiState.get(),
+    tableName: firstTable,
+    dataKey,
+    columns,
+    sampleData,
+    schema: dataConfig.dbSchema, // need to remove this later
+    topK: 5000,
+  })
+}
 
 async function queryDB(query: string): Promise<any[]> {
   // Open a new connection if there is none
   if (!db) {
-    db = await open({
-      filename: process.cwd() + "/exampleData/cars.db",
-      driver: sqlite3.Database,
-    })
+    throw error("no db connected!")
   }
 
   // Query to get all todos from the "todo" table
@@ -306,6 +338,7 @@ const initialUIState: {
 export const AI = createAI({
   actions: {
     submitUserMessage,
+    setupDB,
   },
   // Each state can be any shape of object, but for chat applications
   // it makes sense to have an array of messages. Or you may prefer something like { id: number, messages: Message[] }

@@ -3,6 +3,7 @@
 import styled from "styled-components"
 import { Caption, Card } from "./styles"
 import { max } from "d3-array"
+import React from "react"
 
 const TableContainer = styled.table`
   th,
@@ -48,33 +49,37 @@ const Table = ({
     <Card>
       <h2>{title}</h2>
       <TableContainer>
-        <Row>
-          {headers.map((header, i) => (
-            <Header key={i}>{header}</Header>
-          ))}
-          <Header>Chart</Header>
-        </Row>
-        {data.map((row, i) => {
-          const values = Object.values(row)
+        <thead>
+          <Row>
+            {headers.map((header, i) => (
+              <Header key={i}>{header}</Header>
+            ))}
+            <Header>Chart</Header>
+          </Row>
+        </thead>
+        <tbody>
+          {data.map((row, i) => {
+            const values = Object.values(row)
 
-          return (
-            <Row key={i}>
-              {values.map((value, i) => {
-                const isNumber = typeof value === "number"
-                return isNumber ? (
-                  <>
-                    <Cell key={i}>{value.toFixed(2)}</Cell>
-                    <Cell style={{ width: "100%" }} key={i}>
-                      <Bar width={(value / highest) * 100} />
-                    </Cell>
-                  </>
-                ) : (
-                  <Cell key={i}>{value}</Cell>
-                )
-              })}
-            </Row>
-          )
-        })}
+            return (
+              <Row key={i}>
+                {values.map((value) => {
+                  const isNumber = typeof value === "number"
+                  return isNumber ? (
+                    <React.Fragment key={value}>
+                      <Cell>{value.toFixed(2)}</Cell>
+                      <Cell style={{ width: "100%" }} key={i}>
+                        <Bar width={(value / highest) * 100} />
+                      </Cell>
+                    </React.Fragment>
+                  ) : (
+                    <Cell key={value}>{value}</Cell>
+                  )
+                })}
+              </Row>
+            )
+          })}
+        </tbody>
       </TableContainer>
       <Caption>
         <strong>Query:</strong> {query}
