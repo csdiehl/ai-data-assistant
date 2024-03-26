@@ -9,7 +9,7 @@ import Table from "./Table"
 import sqlite3 from "sqlite3"
 import { open } from "sqlite"
 import { error } from "console"
-import dataConfig from "./dataConfig"
+import schemas from "./dataConfig"
 
 let db: any = null
 
@@ -30,7 +30,7 @@ async function setupDB(fileName: string) {
     "select name from sqlite_master where type='table'"
   )
 
-  const firstTable = tables[0].name
+  const firstTable: string = tables[0].name
   const sampleData = await queryDB(`SELECT * FROM ${firstTable} LIMIT 3`)
 
   const columns = Object.keys(sampleData[0])
@@ -44,7 +44,7 @@ async function setupDB(fileName: string) {
     dataKey,
     columns,
     sampleData,
-    schema: dataConfig.dbSchema, // need to remove this later
+    schema: schemas[firstTable], // need to remove this later
     topK: 5000,
   })
 }

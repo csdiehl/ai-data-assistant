@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useUIState, useActions, useAIState } from "ai/rsc"
 import type { AI } from "./action"
 import styled from "styled-components"
-import dataConfig from "./dataConfig"
+import { options } from "./dataConfig"
 
 const App = styled.div`
   background: #f5f5f5;
@@ -67,46 +67,57 @@ const Messages = styled.div`
   max-width: 1000px;
 `
 
-// "/exampleData/cars.db"
+const Select = styled.select`
+  background: #fff;
+  padding: 8px;
+  color: black;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+`
+
+const Form = styled.form`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+`
 
 export default function Page() {
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useUIState<typeof AI>()
   const { submitUserMessage, setupDB } = useActions<typeof AI>()
-
   const [aiState, setAiState] = useAIState()
-  const [file, setFile] = useState<any[] | null>(dataConfig.sampleData)
 
-  function handleChange(e: any) {
-    new Response(e.target.files[0]).json().then((data) => {
-      setFile(data)
-    })
-  }
+  const [selectedFile, setSelectedFile] = useState("Cars.db")
 
   function handleSubmit(e: any) {
     e.preventDefault()
-    if (!file) return
     // if successful, update the data
-    setupDB("Cars.db")
+    setupDB(selectedFile)
+  }
+
+  function handleFileChange(e: any) {
+    setSelectedFile(e.target.value)
   }
 
   const noData = !aiState?.sampleData || aiState.sampleData.length === 0
 
   return (
     <App>
-      {file === dataConfig.sampleData && (
-        <h3>Using the example {dataConfig.tableName} dataset.</h3>
-      )}
       {noData ? (
         <UploadForm>
           <h2>To chat with the AI you need some data!</h2>
-          <p>Current dataset: {dataConfig.tableName}</p>
-          <form>
-            <input type="file" onChange={handleChange} />
-            <Submit type="submit" onClick={handleSubmit}>
-              Upload your data
-            </Submit>
-          </form>
+          <Form>
+            <Select onChange={handleFileChange}>
+              {options.map(({ value, label }) => (
+                <option value={value} key={label}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+            <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
+          </Form>
         </UploadForm>
       ) : (
         <>
@@ -157,3 +168,12 @@ export default function Page() {
     </App>
   )
 }
+
+/**
+ * file uploads
+ *   function handleChange(e: any) {
+    new Response(e.target.files[0]).json().then((data) => {
+      setFile(data)
+    })
+  }
+ */
