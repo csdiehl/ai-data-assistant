@@ -81,6 +81,7 @@ function getSchema(db: Database, tableName: string): Promise<string> {
         if (err) {
           reject(err)
         } else {
+          //@ts-ignore - a bit worried about this
           const schema = rows[0].sql
           resolve(schema)
         }

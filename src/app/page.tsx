@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useUIState, useActions, useAIState } from "ai/rsc"
 import type { AI } from "./action"
 import styled from "styled-components"
-import { options } from "./dataConfig"
 //@ts-ignore
 import { parse } from "papaparse"
 
@@ -100,7 +99,10 @@ export default function Page() {
       alert("Please select a file")
       return
     }
+
+    //@ts-ignore
     const isCSV = selectedFile.type === "text/csv"
+    //@ts-ignore
     const isJSON = selectedFile.type === "application/json"
 
     if (!isCSV && !isJSON) {
@@ -112,7 +114,7 @@ export default function Page() {
     if (isCSV) {
       parse(selectedFile, {
         dynamicTyping: true,
-        complete: function (results) {
+        complete: function (results: any) {
           setupDB(JSON.stringify(results.data))
         },
       })
@@ -208,6 +210,7 @@ async function jsonFileToArrays(jsonFile: File) {
   const fileContent = await readFilePromise
 
   // Parse the JSON content
+  //@ts-ignore
   const jsonData = JSON.parse(fileContent)
 
   // Extract column names from the keys of the first object

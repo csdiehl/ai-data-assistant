@@ -35,9 +35,6 @@ dependencies:
   react-dom:
     specifier: ^18
     version: 18.0.0(react@18.0.0)
-  sqlite:
-    specifier: ^5.1.1
-    version: 5.1.1
   sqlite3:
     specifier: ^5.1.7
     version: 5.1.7
@@ -3663,10 +3660,6 @@ packages:
     transitivePeerDependencies:
       - bluebird
       - supports-color
-    dev: false
-
-  /sqlite@5.1.1:
-    resolution: {integrity: sha512-oBkezXa2hnkfuJwUo44Hl9hS3er+YFtueifoajrgidvqsJRQFpc5fKoAkAor1O5ZnLoa28GBScfHXs8j0K358Q==}
     dev: false
 
   /ssri@8.0.1:
