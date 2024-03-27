@@ -221,6 +221,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
                   z.literal("scatter"),
                   z.literal("line"),
                   z.literal("area"),
+                  z.literal("heatmap"),
                 ])
                 .describe(
                   "The type of chart to render to show the results of the query, based on the type of variables the user has given."
