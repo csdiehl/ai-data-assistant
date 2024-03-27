@@ -9,7 +9,7 @@ import Table from "./Table"
 import sqlite3, { Database } from "sqlite3"
 import { error } from "console"
 
-let db: any = null
+const db = new sqlite3.Database(":memory:") // Using in-memory database for demonstration
 
 async function setupDB(file: string) {
   "use server"
@@ -19,8 +19,6 @@ async function setupDB(file: string) {
   const data = parsedData.slice(1, parsedData.length)
   const dataKey = columns[0]
   const tableName = "data"
-
-  db = new sqlite3.Database(":memory:") // Using in-memory database for demonstration
 
   // Create table with columns
   const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (${columns
@@ -193,14 +191,15 @@ DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the databa
 To use your query to interact with the database, call \`summarize_data\`. 
 
 If the user just wants a general description of the dataset, call \`describe_data\`.
-If the user just wants to show the general relationship between two or more variables, call \`describe_relationship\`
 
-You can choose different charts depending on the question.
--Line charts show how data has changed over time. The time variable should be on the x axis. 
--Scatter plots show the relationship between two or more numeric variables, or how one variable depends on another.
--Bar charts show how a numeric variable differs between different categories. 
-For a horizontal bar chart the numeric variable should be on the x axis and the category on the y axis. For a vertical bar chart it should be the reverse.
--Area charts show change over time for two or more variables that together add up to a whole. 
+You can choose charts depending on the number and data type of variables in the question. The data types are described in the schema.
+For just one numeric and one text variable, use a bar chart. 
+
+For two or more numeric variables, use a scatter, line or area chart. 
+-Line or area charts show how a variable has changed over time. Time goes on the x axis. 
+-Scatter plots show the relationship between two or more unordered numeric variable. They could also show a category by size or color.
+
+For two categorical variables, and one numeric, use a heatmap. 
 
 If the user wants to complete an impossible task, respond that you are a a work in progress and cannot do that.
 
@@ -244,52 +243,6 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           )
         },
       },
-      describe_relationship: {
-        description:
-          "Describe the relationship between two variables, or how one depends on another.",
-        parameters: chartSpecification,
-        render: async function* ({ x, y, color, title }) {
-          // Show a spinner on the client while we wait for the response.
-          yield <Spinner />
-
-          const chartData = await queryDB(
-            `SELECT ${x}, ${y} from ${tableName} LIMIT 5000`
-          )
-
-          // Update the final AI state.
-          aiState.done({
-            ...aiState.get(),
-            messages: [
-              ...aiState.get().messages,
-              {
-                role: "function",
-                name: "describe_relationship",
-                // Content can be any string to provide context to the LLM in the rest of the conversation.
-                content: `scatterplot of ${x} and ${y}`,
-              },
-            ],
-          })
-
-          // fix string types to number - super temporary hack. TODO: change this in the upload
-          chartData.forEach((d) => {
-            d[x] = +d[x]
-            d[y] = +d[y]
-          })
-
-          return (
-            <Chart
-              dataKey={dataKey}
-              type="scatter"
-              data={chartData}
-              x={x}
-              y={y}
-              color={color}
-              description={title}
-            />
-          )
-        },
-      },
-
       summarize_data: {
         description:
           "Create a summary of the data, grouping one variable by another.",

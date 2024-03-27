@@ -5,7 +5,7 @@ import * as Plot from "@observablehq/plot"
 import { Card, Caption } from "./styles"
 
 interface ChartSpec {
-  type?: "line" | "scatter" | "area"
+  type?: "line" | "scatter" | "area" | "heatmap"
   x: string
   y: string
   color?: string
@@ -67,6 +67,17 @@ function Mark({ x, y, color = "steelblue", type, data, dataKey }: ChartSpec) {
       ]
     case "area":
       return [Plot.areaY(data, { x, y, fill: color, sort: x })]
+    case "heatmap":
+      return [
+        Plot.rect(data, {
+          x,
+          y,
+          fill: color,
+          sort: x,
+          interval: 1,
+          inset: 0.5,
+        }),
+      ]
     default:
       return undefined
   }
