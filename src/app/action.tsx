@@ -1,5 +1,5 @@
 import { OpenAI } from "openai"
-import { createAI, getMutableAIState, render } from "ai/rsc"
+import { createAI, getMutableAIState, createStreamableUI } from "ai/rsc"
 import { z } from "zod"
 import Description from "./Description"
 import Chart from "./Chart"
@@ -10,6 +10,7 @@ import sqlite3, { Database } from "sqlite3"
 import { error } from "console"
 import { Card, Caption, SkeletonChart } from "./styles"
 import { ReactNode } from "react"
+import { runOpenAICompletion } from "@/lib/utils"
 
 const db = new sqlite3.Database(":memory:") // Using in-memory database for demonstration
 
@@ -152,40 +153,20 @@ async function submitUserMessage(userInput: string) {
   // Force the ai to use the actual column names, even if the user provides similar-sounding names
   const cols: any = unionOfLiterals(columns)
 
-  const chartSpecification = z.object({
-    type: z
-      .union([
-        z.literal("bar"),
-        z.literal("scatter"),
-        z.literal("line"),
-        z.literal("area"),
-      ])
-      .describe(
-        "The type of chart to render to show the results of the query, based on the type of variables the user has given."
-      ),
-    x: cols.describe("The x-axis variable."),
-    y: cols.describe("The y-axis variable."),
-    color: z.optional(
-      cols.describe(
-        "The color variable. It could be a third variable or just a color name. Optional."
-      )
-    ),
-    title: z
-      .string()
-      .describe(
-        "A brief title for a chart that shows the results of the query"
-      ),
-  })
-
   const sampleData: any[] = aiState.get().sampleData
   const dbSchema: string = aiState.get().schema
   const topK: number = aiState.get().topK
 
+  const reply = createStreamableUI(
+    <ResponseCard title={"thinking..."} caption={""}>
+      <SkeletonChart />
+    </ResponseCard>
+  )
+
   // The `render()` creates a generated, streamable UI.
-  const ui = render({
+  const completion = runOpenAICompletion(openai, {
     model: "gpt-3.5-turbo",
     temperature: 0,
-    provider: openai,
     messages: [
       {
         role: "system",
@@ -204,8 +185,6 @@ Never query for all the columns from a specific table, only ask for a the few re
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 To use your query to interact with the database, call \`summarize_data\`. 
 
-If the user just wants a general description of the dataset, call \`describe_data\`.
-
 You can choose charts depending on the number and data type of variables in the question. The data types are described in the schema.
 For just one numeric and one text variable, use a bar chart. 
 
@@ -221,43 +200,14 @@ Besides that, you can also chat with users and do some calculations if needed.`,
       },
       { role: "user", content: userInput },
     ],
-    // `text` is called when an AI returns a text response (as opposed to a tool call).
-    // Its content is streamed from the LLM, so this function will be called
-    // multiple times with `content` being incremental.
-    text: ({ content, done }) => {
-      // When it's the final content, mark the state as done and ready for the client to access.
-      if (done) {
-        aiState.done({
-          ...aiState.get(),
-          messages: [
-            ...aiState.get().messages,
-            {
-              role: "assistant",
-              content,
-            },
-          ],
-        })
-      }
-
-      return <p>{content}</p>
-    },
-    tools: {
-      describe_dataset: {
-        description:
-          "Give a general description of the data, including the variables and size of the dataset.",
+    functions: [
+      {
+        name: "describe_dataset",
+        description: "give a general description the dataset.",
         parameters: z.object({}).required(),
-        render: async function* () {
-          const allData = await queryDB(`SELECT * FROM ${tableName};`)
-          return (
-            <Description
-              data={allData}
-              length={allData.length}
-              vars={columns}
-            />
-          )
-        },
       },
-      summarize_data: {
+      {
+        name: "summarize_data",
         description:
           "Create a summary of the data, grouping one variable by another.",
         parameters: z
@@ -265,60 +215,104 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             query: z
               .string()
               .describe("The sqlite3 query that answers the user's question."),
-            chartSpec: chartSpecification,
+            chartSpec: z.object({
+              type: z
+                .union([
+                  z.literal("bar"),
+                  z.literal("scatter"),
+                  z.literal("line"),
+                  z.literal("area"),
+                ])
+                .describe(
+                  "The type of chart to render to show the results of the query, based on the type of variables the user has given."
+                ),
+              x: z.string().describe("The x-axis variable."),
+              y: z.string().describe("The y-axis variable."),
+              color: z.optional(
+                z
+                  .string()
+                  .describe(
+                    "The color variable. It could be a third variable or just a color name. Optional."
+                  )
+              ),
+              title: z
+                .string()
+                .describe(
+                  "A brief title for a chart that shows the results of the query"
+                ),
+            }),
           })
           .required(),
-        render: async function* ({ query, chartSpec }) {
-          // Show a spinner on the client while we wait for the response.
-          yield (
-            <ResponseCard title={"thinking..."} caption={query}>
-              <SkeletonChart />
-            </ResponseCard>
-          )
-
-          const response = await queryDB(query)
-
-          // Update the final AI state.
-          aiState.done({
-            ...aiState.get(),
-            messages: [
-              ...aiState.get().messages,
-              {
-                role: "function",
-                name: "summarize_data",
-                // Content can be any string to provide context to the LLM in the rest of the conversation.
-                content: JSON.stringify(response),
-              },
-            ],
-          })
-
-          const { x, y, title, type, color } = chartSpec
-
-          // TODO: passing in the y variable seems to work ok for now, but should make this more robust
-          return type === "bar" ? (
-            <ResponseCard title={title} caption={query}>
-              <Table data={response} xVar={y} />
-            </ResponseCard>
-          ) : (
-            <ResponseCard title={title} caption={query}>
-              <Chart
-                type={type}
-                data={response}
-                dataKey={dataKey}
-                x={x}
-                y={y}
-                color={color}
-              />
-            </ResponseCard>
-          )
-        },
       },
-    },
+    ],
+  })
+
+  // called when the ai just returns a text response
+  completion.onTextContent((content: string, isFinal: boolean) => {
+    reply.update(
+      <ResponseCard title={""} caption={""}>
+        <p>{content}</p>
+      </ResponseCard>
+    )
+    if (isFinal) {
+      reply.done()
+      aiState.done({
+        ...aiState.get(),
+        messages: [...aiState.get().messages, { role: "assistant", content }],
+      })
+    }
+  })
+
+  completion.onFunctionCall("describe_dataset", async () => {
+    const allData = await queryDB(`SELECT * FROM ${tableName};`)
+    reply.done(
+      <Description data={allData} length={allData.length} vars={columns} />
+    )
+  })
+
+  completion.onFunctionCall("summarize_data", async ({ query, chartSpec }) => {
+    const response = await queryDB(query)
+
+    const { x, y, title, type, color } = chartSpec
+
+    const component =
+      type === "bar" ? (
+        <ResponseCard title={title} caption={query}>
+          <Table data={response} xVar={y} />
+        </ResponseCard>
+      ) : (
+        <ResponseCard title={title} caption={query}>
+          <Chart
+            type={type}
+            data={response}
+            dataKey={dataKey}
+            x={x}
+            y={y}
+            color={color}
+          />
+        </ResponseCard>
+      )
+
+    reply.done(component)
+
+    // Update the final AI state.
+    aiState.done({
+      ...aiState.get(),
+      messages: [
+        ...aiState.get().messages,
+        {
+          role: "function",
+          name: "summarize_data",
+          // Content can be any string to provide context to the LLM in the rest of the conversation.
+          content: JSON.stringify(response),
+        },
+      ],
+    })
   })
 
   return {
     id: Date.now(),
-    display: ui,
+    display: reply.value,
   }
 }
 
