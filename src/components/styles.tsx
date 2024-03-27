@@ -40,3 +40,16 @@ export const Caption = styled.p`
   line-height: 1rem;
   padding: 8px 0px;
 `
+export const ChartControl = styled.button`
+  all: unset;
+  padding: 4px;
+  font-size: 0.875rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+`

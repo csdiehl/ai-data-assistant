@@ -1,13 +1,15 @@
 "use client"
 
-import React, { useRef, useEffect } from "react"
+import React, { useRef, useEffect, useState } from "react"
 import * as Plot from "@observablehq/plot"
+import { ChartControl } from "./styles"
 
 interface ChartSpec {
-  type?: "line" | "scatter" | "area" | "heatmap" | "density"
+  type?: "line" | "scatter" | "area" | "heatmap" | "density" | "barX" | "barY"
   x: string
-  y: string
+  y?: string
   color?: string
+  size?: string
   data: any[]
   dataKey: string
   trace?: string // trace shows what the AI put in for the parameters
@@ -18,31 +20,62 @@ const Chart = ({
   x,
   y,
   color = "steelblue",
+  size,
   type = "scatter",
   dataKey,
 }: ChartSpec) => {
   const container = useRef<HTMLDivElement>(null)
 
+  const [axes, setAxes] = useState<{
+    x: string
+    y: string | undefined
+  }>({
+    x,
+    y,
+  })
+
+  function flip() {
+    if (!x || !y) return
+    //@ts-ignore
+    setAxes((axes) => ({ x: axes.y, y: axes.x }))
+  }
+
   useEffect(() => {
     if (!container.current) return
+
+    const { x, y } = axes
     const plot = Plot.plot({
       height: 500,
       y: { grid: true },
       x: { grid: true, ticks: 5 },
       marginLeft: 80,
       color: { legend: true },
-      marks: Mark({ data, x, y, color, type, dataKey }),
+      r: { legend: true },
+      marks: Mark({ data, x, y, color, type, dataKey, size }),
     })
 
     container.current.append(plot)
 
     return () => plot.remove()
-  }, [x, y, color, data, type, dataKey])
-  return <div ref={container}></div>
+  }, [axes, color, data, type, dataKey, size])
+  return (
+    <>
+      <ChartControl onClick={flip}>Flip axes</ChartControl>
+      <div ref={container}></div>
+    </>
+  )
 }
 
 // return a different type of chart depending on the request
-function Mark({ x, y, color = "steelblue", type, data, dataKey }: ChartSpec) {
+function Mark({
+  x,
+  y,
+  color = "steelblue",
+  size,
+  type,
+  data,
+  dataKey,
+}: ChartSpec) {
   switch (type) {
     case "line":
       return [
@@ -53,7 +86,7 @@ function Mark({ x, y, color = "steelblue", type, data, dataKey }: ChartSpec) {
       ]
     case "scatter":
       return [
-        Plot.dot(data, { x, y, fill: color }),
+        Plot.dot(data, { x, y, fill: color, r: size }),
         Plot.tip(data, Plot.pointerX({ x: x, y: y, title: (d) => d[dataKey] })),
       ]
     case "area":
@@ -69,6 +102,10 @@ function Mark({ x, y, color = "steelblue", type, data, dataKey }: ChartSpec) {
           inset: 0.5,
         }),
       ]
+    case "barX":
+      return [Plot.barX(data, { x: x, y: y, fill: color })]
+    case "barY":
+      return [Plot.barY(data, { x: x, y: y, fill: color })]
     case "density":
       return [
         Plot.density(data, {

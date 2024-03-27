@@ -185,11 +185,15 @@ DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the databa
 To use your query to interact with the database, call \`summarize_data\`. 
 
 You can choose charts depending on the number and data type of variables in the question. The data types are described in the schema.
-For just one numeric and one text variable, use a bar chart. 
+If there are less than 15 rows in the result, always put 'table' for the chart type, unless the user says they want a chart. 
+For just one numeric and one text variable, use a bar chart. For barY, the text variable should be on the x axis. 
+For barX, the text variable should be on the y axis.
+
+Line or area charts show how a variable has changed over time. In line or area charts, time goes on the x axis. 
 
 For two or more numeric variables, use a scatter, line or area chart. 
--Line or area charts show how a variable has changed over time. Time goes on the x axis. 
 -Scatter plots show the relationship between two or more unordered numeric variable. They could also show a category by size or color.
+-Density can be used for a scatter plot with a lot of points.
 
 For two categorical variables, and one numeric, use a heatmap. 
 
@@ -217,23 +221,26 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             chartSpec: z.object({
               type: z
                 .union([
-                  z.literal("bar"),
+                  z.literal("table"),
+                  z.literal("barX"),
+                  z.literal("barY"),
                   z.literal("scatter"),
                   z.literal("line"),
                   z.literal("area"),
                   z.literal("heatmap"),
+                  z.literal("density"),
                 ])
                 .describe(
-                  "The type of chart to render to show the results of the query, based on the type of variables the user has given."
+                  "The type of chart to render to show the results of the query, based on the type of variables the user has given. For simple queries with one text and one numeric variable, always use a table, unless the user requests a chart."
                 ),
               x: z.string().describe("The x-axis variable."),
-              y: z.string().describe("The y-axis variable."),
+              y: z.string().optional().describe("The y-axis variable."),
+              size: z
+                .string()
+                .optional()
+                .describe("The variable to be represented by size."),
               color: z.optional(
-                z
-                  .string()
-                  .describe(
-                    "The color variable. It could be a third variable or just a color name. Optional."
-                  )
+                z.string().describe("The variable to be represented by color.")
               ),
               title: z
                 .string()
@@ -271,7 +278,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
   })
 
   completion.onFunctionCall("summarize_data", async ({ query, chartSpec }) => {
-    const { x, y, title, type, color } = chartSpec
+    const { x, y, title, type, color, size } = chartSpec
 
     reply.update(
       <ResponseCard title={title} caption={query}>
@@ -284,9 +291,9 @@ Besides that, you can also chat with users and do some calculations if needed.`,
     const response = await queryDB(query)
 
     const component =
-      type === "bar" ? (
+      type === "table" ? (
         <ResponseCard title={title} caption={query}>
-          <Table data={response} xVar={y} />
+          <Table data={response} xVar={x} />
         </ResponseCard>
       ) : (
         <ResponseCard title={title} caption={query}>
@@ -296,6 +303,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             dataKey={dataKey}
             x={x}
             y={y}
+            size={size}
             color={color}
           />
         </ResponseCard>
