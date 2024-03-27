@@ -8,6 +8,7 @@ import Table from "./Table"
 // Import the necessary modules for SQLite
 import sqlite3, { Database } from "sqlite3"
 import { error } from "console"
+import { Card } from "./styles"
 
 const db = new sqlite3.Database(":memory:") // Using in-memory database for demonstration
 
@@ -108,12 +109,6 @@ function queryDB(query: string): Promise<any[]> {
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
-
-// An example of a spinner component. You can also import your own components,
-// or 3rd party component libraries.
-function Spinner() {
-  return <div>Loading...</div>
-}
 
 async function submitUserMessage(userInput: string) {
   "use server"
@@ -256,7 +251,11 @@ Besides that, you can also chat with users and do some calculations if needed.`,
           .required(),
         render: async function* ({ query, chartSpec }) {
           // Show a spinner on the client while we wait for the response.
-          yield <Spinner />
+          yield (
+            <Card>
+              <h2>Thinking...</h2>
+            </Card>
+          )
 
           const response = await queryDB(query)
 
