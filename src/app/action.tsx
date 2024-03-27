@@ -11,7 +11,7 @@ import { Card, Caption, SkeletonChart } from "@/components/styles"
 import { ReactNode } from "react"
 import { runOpenAICompletion } from "@/lib/utils"
 
-const db = new sqlite3.Database(":memory:") // Using in-memory database for demonstration
+let db: any = null
 
 function ResponseCard({
   title,
@@ -40,6 +40,8 @@ async function setupDB(file: string) {
   const data = parsedData.slice(1, parsedData.length)
   const dataKey = columns[0]
   const tableName = "data"
+
+  db = new sqlite3.Database(":memory:") // Using in-memory database for demonstration
 
   // Create table with columns
   const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (${columns
@@ -268,9 +270,17 @@ Besides that, you can also chat with users and do some calculations if needed.`,
   })
 
   completion.onFunctionCall("summarize_data", async ({ query, chartSpec }) => {
-    const response = await queryDB(query)
-
     const { x, y, title, type, color } = chartSpec
+
+    reply.update(
+      <ResponseCard title={title} caption={query}>
+        <SkeletonChart>
+          Building {type} chart of {x}, {y}, {color}
+        </SkeletonChart>
+      </ResponseCard>
+    )
+
+    const response = await queryDB(query)
 
     const component =
       type === "bar" ? (

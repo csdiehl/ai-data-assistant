@@ -11,9 +11,12 @@ const TableContainer = styled.table`
   }
 `
 
-const Row = styled.tr``
+const Row = styled.tr`
+  color: #555;
+`
 const Header = styled.th`
   padding: 8px;
+  color: #333;
 `
 const Cell = styled.td`
   padding: 8px;
@@ -22,8 +25,10 @@ const Cell = styled.td`
   text-transform: capitalize;
 `
 const Bar = styled.span<{ width: number }>`
-  background: steelblue;
-  height: 8px;
+  background: linear-gradient(to right, teal, steelblue);
+  opacity: 0.8;
+  height: 4px;
+  border-radius: 4px;
   width: ${(props) => props.width}%;
   display: inline-block;
 `
@@ -41,7 +46,6 @@ const Table = ({ data, xVar }: { data: Object[]; xVar: string }) => {
           {headers.map((header, i) => (
             <Header key={i}>{header}</Header>
           ))}
-          <Header>Chart</Header>
         </Row>
       </thead>
       <tbody>
@@ -53,12 +57,21 @@ const Table = ({ data, xVar }: { data: Object[]; xVar: string }) => {
               {values.map((value) => {
                 const isNumber = typeof value === "number"
                 return isNumber ? (
-                  <React.Fragment key={value}>
-                    <Cell>{value.toFixed(2)}</Cell>
-                    <Cell style={{ width: "100%" }} key={i}>
-                      <Bar width={(value / highest) * 100} />
-                    </Cell>
-                  </React.Fragment>
+                  <Cell
+                    style={{
+                      width: "100%",
+                      minWidth: "max(300px, 100%)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                    }}
+                    key={value}
+                  >
+                    <p style={{ fontSize: ".875rem", lineHeight: ".9rem" }}>
+                      {value.toFixed(2)}
+                    </p>
+                    <Bar width={(value / highest) * 100} />
+                  </Cell>
                 ) : (
                   <Cell key={value}>{value}</Cell>
                 )
