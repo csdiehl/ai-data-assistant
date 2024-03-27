@@ -84,6 +84,13 @@ const Form = styled.form`
   padding: 24px;
 `
 
+const FileInput = styled.input`
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 16px;
+`
+
 export default function Page() {
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useUIState<typeof AI>()
@@ -138,7 +145,7 @@ export default function Page() {
         <UploadForm>
           <h2>To chat with the AI you need some data!</h2>
           <Form>
-            <input type="file" onChange={handleFileChange}></input>
+            <FileInput type="file" onChange={handleFileChange}></FileInput>
             <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
           </Form>
         </UploadForm>
