@@ -2,7 +2,6 @@
 
 import React, { useRef, useEffect } from "react"
 import * as Plot from "@observablehq/plot"
-import { Card, Caption } from "./styles"
 
 interface ChartSpec {
   type?: "line" | "scatter" | "area" | "heatmap"
@@ -10,10 +9,8 @@ interface ChartSpec {
   y: string
   color?: string
   data: any[]
-  description?: string
   dataKey: string
   trace?: string // trace shows what the AI put in for the parameters
-  query?: string
 }
 
 const Chart = ({
@@ -22,15 +19,14 @@ const Chart = ({
   y,
   color = "steelblue",
   type = "scatter",
-  description,
   dataKey,
-  query,
 }: ChartSpec) => {
   const container = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!container.current) return
     const plot = Plot.plot({
+      height: 500,
       y: { grid: true },
       x: { grid: true },
       marginLeft: 80,
@@ -42,13 +38,7 @@ const Chart = ({
 
     return () => plot.remove()
   }, [x, y, color, data, type, dataKey])
-  return (
-    <Card>
-      {description && <p>{description}</p>}
-      <div ref={container}></div>
-      {query && <Caption>{query}</Caption>}
-    </Card>
-  )
+  return <div ref={container}></div>
 }
 
 // return a different type of chart depending on the request

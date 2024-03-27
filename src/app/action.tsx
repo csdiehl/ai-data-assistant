@@ -8,9 +8,29 @@ import Table from "./Table"
 // Import the necessary modules for SQLite
 import sqlite3, { Database } from "sqlite3"
 import { error } from "console"
-import { Card } from "./styles"
+import { Card, Caption, SkeletonChart } from "./styles"
+import { ReactNode } from "react"
 
 const db = new sqlite3.Database(":memory:") // Using in-memory database for demonstration
+
+function ResponseCard({
+  title,
+  caption,
+  children,
+}: {
+  title: string
+  caption: string
+  children: ReactNode
+}) {
+  "use client"
+  return (
+    <Card>
+      <h2>{title}</h2>
+      {children}
+      <Caption>{caption}</Caption>
+    </Card>
+  )
+}
 
 async function setupDB(file: string) {
   "use server"
@@ -252,9 +272,9 @@ Besides that, you can also chat with users and do some calculations if needed.`,
         render: async function* ({ query, chartSpec }) {
           // Show a spinner on the client while we wait for the response.
           yield (
-            <Card>
-              <h2>Thinking...</h2>
-            </Card>
+            <ResponseCard title={"thinking..."} caption={query}>
+              <SkeletonChart />
+            </ResponseCard>
           )
 
           const response = await queryDB(query)
@@ -277,18 +297,20 @@ Besides that, you can also chat with users and do some calculations if needed.`,
 
           // TODO: passing in the y variable seems to work ok for now, but should make this more robust
           return type === "bar" ? (
-            <Table data={response} title={title} query={query} xVar={y} />
+            <ResponseCard title={title} caption={query}>
+              <Table data={response} xVar={y} />
+            </ResponseCard>
           ) : (
-            <Chart
-              type={type}
-              data={response}
-              dataKey={dataKey}
-              x={x}
-              y={y}
-              color={color}
-              description={title}
-              query={query}
-            />
+            <ResponseCard title={title} caption={query}>
+              <Chart
+                type={type}
+                data={response}
+                dataKey={dataKey}
+                x={x}
+                y={y}
+                color={color}
+              />
+            </ResponseCard>
           )
         },
       },

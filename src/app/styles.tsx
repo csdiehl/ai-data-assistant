@@ -12,6 +12,14 @@ export const Card = styled.div`
     line-height: 1.5rem;
   }
 `
+export const SkeletonChart = styled.div`
+  border-radius: 8px;
+  width: 100%;
+  padding: 16px;
+  background: lightgrey;
+  height: 500px;
+`
+
 export const Label = styled.li`
   list-style: none;
   font-size: 1rem;
