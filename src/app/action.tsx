@@ -178,7 +178,6 @@ async function submitUserMessage(userInput: string) {
   })
 
   const sampleData: any[] = aiState.get().sampleData
-  const dataSummary: any[] = aiState.get().dataSummary
   const dbSchema: string = aiState.get().schema
   const topK: number = aiState.get().topK
 
@@ -288,7 +287,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
                 role: "function",
                 name: "summarize_data",
                 // Content can be any string to provide context to the LLM in the rest of the conversation.
-                content: JSON.stringify(dataSummary),
+                content: JSON.stringify(response),
               },
             ],
           })
@@ -328,7 +327,6 @@ const initialAIState: {
   sampleData: any[]
   dataKey: string
   columns: string[]
-  dataSummary: any[]
   tableName: string
   schema: string
   topK: number
@@ -340,7 +338,6 @@ const initialAIState: {
   }[]
 } = {
   sampleData: [],
-  dataSummary: [],
   dataKey: "",
   messages: [],
   columns: [],
