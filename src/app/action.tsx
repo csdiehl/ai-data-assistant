@@ -24,7 +24,17 @@ async function setupDB(file: string) {
 
   // Create table with columns
   const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (${columns
-    .map((column: string) => `${column} TEXT`)
+    .map((column: string, i: number) => {
+      const dataType = typeof data[0][i]
+
+      const sqlType = Number.isInteger(data[0][i])
+        ? "REAL"
+        : dataType === "number"
+        ? "INTEGER"
+        : "TEXT"
+
+      return `${column} ${sqlType}`
+    })
     .join(", ")})`
 
   db.serialize(() => {
