@@ -35,7 +35,8 @@ export const Label = styled.li`
   }
 `
 export const Caption = styled.p`
-  color: grey;
+  color: #999;
   font-size: 0.875rem;
   line-height: 1rem;
+  padding: 8px 0px;
 `

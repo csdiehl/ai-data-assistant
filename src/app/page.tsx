@@ -15,16 +15,23 @@ const App = styled.div`
   overflow-y: scroll;
 `
 
+const InputContainer = styled.div`
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  margin: 0 8px;
+  width: calc(100% - 16px);
+  max-width: 500px;
+`
+
 const Input = styled.input`
   height: 48px;
   width: 100%;
-  max-width: 500px;
   border-radius: 8px;
   background: #fff;
   border: 1px solid #ccc;
   color: black;
-  position: absolute;
-  bottom: 16px;
+  padding: 0 8px;
 `
 
 const Message = styled.div<{ $aiMessage: boolean }>`
@@ -68,14 +75,6 @@ const Messages = styled.div`
   max-width: 1000px;
 `
 
-const Select = styled.select`
-  background: #fff;
-  padding: 8px;
-  color: black;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-`
-
 const Form = styled.form`
   display: flex;
   align-items: center;
@@ -98,6 +97,7 @@ export default function Page() {
   const [aiState, setAiState] = useAIState()
 
   const [selectedFile, setSelectedFile] = useState(null)
+  const [length, setLength] = useState(0)
 
   function handleSubmit(e: any) {
     e.preventDefault()
@@ -123,12 +123,14 @@ export default function Page() {
         dynamicTyping: true,
         complete: function (results: any) {
           setupDB(JSON.stringify(results.data))
+          setLength(results.data.length)
         },
       })
     }
     if (isJSON) {
       jsonFileToArrays(selectedFile).then((data) => {
         setupDB(JSON.stringify(data))
+        setLength(data.length)
       })
     }
   }
@@ -185,13 +187,21 @@ export default function Page() {
               setInputValue("")
             }}
           >
-            <Input
-              placeholder="Send a message..."
-              value={inputValue}
-              onChange={(event) => {
-                setInputValue(event.target.value)
-              }}
-            />
+            <InputContainer>
+              {selectedFile && (
+                <p style={{ marginBottom: "8px" }}>
+                  Chatting with {selectedFile.name}{" "}
+                  <span style={{ color: "grey" }}>{length} rows</span>
+                </p>
+              )}
+              <Input
+                placeholder="Send a message..."
+                value={inputValue}
+                onChange={(event) => {
+                  setInputValue(event.target.value)
+                }}
+              />
+            </InputContainer>
           </form>
         </>
       )}
