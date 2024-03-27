@@ -190,6 +190,7 @@ export default function Page() {
             <InputContainer>
               {selectedFile && (
                 <p style={{ marginBottom: "8px" }}>
+                  {/*@ts-ignore*/}
                   Chatting with {selectedFile.name}{" "}
                   <span style={{ color: "grey" }}>{length} rows</span>
                 </p>
