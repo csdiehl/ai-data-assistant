@@ -96,16 +96,32 @@ export default function Page() {
   function handleSubmit(e: any) {
     e.preventDefault()
     // if successful, update the data
+    if (!selectedFile) {
+      alert("Please select a file")
+      return
+    }
+    const isCSV = selectedFile.type === "text/csv"
+    const isJSON = selectedFile.type === "application/json"
+
+    if (!isCSV && !isJSON) {
+      alert("Please select a CSV or JSON file")
+      return
+    }
 
     // parse the csv into json
-    parse(selectedFile, {
-      dynamicTyping: true,
-      complete: function (results) {
-        console.log(results.data)
-
-        setupDB(JSON.stringify(results.data))
-      },
-    })
+    if (isCSV) {
+      parse(selectedFile, {
+        dynamicTyping: true,
+        complete: function (results) {
+          setupDB(JSON.stringify(results.data))
+        },
+      })
+    }
+    if (isJSON) {
+      jsonFileToArrays(selectedFile).then((data) => {
+        setupDB(JSON.stringify(data))
+      })
+    }
   }
 
   function handleFileChange(e: any) {
@@ -174,11 +190,39 @@ export default function Page() {
   )
 }
 
-/**
- * file uploads
- *   function handleChange(e: any) {
-    new Response(e.target.files[0]).json().then((data) => {
-      setFile(data)
-    })
-  }
- */
+async function jsonFileToArrays(jsonFile: File) {
+  // Read the contents of the JSON file
+  const fileReader = new FileReader()
+
+  const readFilePromise = new Promise((resolve, reject) => {
+    fileReader.onload = () => {
+      resolve(fileReader.result)
+    }
+
+    fileReader.onerror = reject
+
+    fileReader.readAsText(jsonFile)
+  })
+
+  // Wait for the file contents to be read
+  const fileContent = await readFilePromise
+
+  // Parse the JSON content
+  const jsonData = JSON.parse(fileContent)
+
+  // Extract column names from the keys of the first object
+  const columnNames = Object.keys(jsonData[0])
+
+  // Initialize result array with column names as the first array
+  const result = [columnNames]
+
+  // Iterate through each object in the JSON array
+  jsonData.forEach((obj: any) => {
+    // Extract values for each column
+    const values = columnNames.map((column) => obj[column])
+    // Push values into the result array
+    result.push(values)
+  })
+
+  return result
+}

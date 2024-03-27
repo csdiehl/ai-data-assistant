@@ -55,6 +55,8 @@ async function setupDB(file: string) {
 
   const sampleData = await queryDB("SELECT * FROM data LIMIT 3")
 
+  console.log(createTableQuery)
+
   const schema = await getSchema(db, tableName)
 
   const aiState = getMutableAIState<typeof AI>()
