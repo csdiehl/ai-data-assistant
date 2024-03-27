@@ -6,58 +6,92 @@ import Chart from "./Chart"
 import { unionOfLiterals } from "./tools"
 import Table from "./Table"
 // Import the necessary modules for SQLite
-import sqlite3 from "sqlite3"
-import { open } from "sqlite"
+import sqlite3, { Database } from "sqlite3"
 import { error } from "console"
-import schemas from "./dataConfig"
 
 let db: any = null
 
-async function setupDB(fileName: string) {
+async function setupDB(file: string) {
   "use server"
 
-  const path = `${process.cwd()}/exampleData/${fileName}`
-
-  // Open a new connection if there is none
-  if (!db) {
-    db = await open({
-      filename: path,
-      driver: sqlite3.Database,
-    })
-  }
-
-  const tables = await queryDB(
-    "select name from sqlite_master where type='table'"
-  )
-
-  const firstTable: string = tables[0].name
-  const sampleData = await queryDB(`SELECT * FROM ${firstTable} LIMIT 3`)
-
-  const columns = Object.keys(sampleData[0])
+  const parsedData = JSON.parse(file)
+  const columns = parsedData[0]
+  const data = parsedData.slice(1, parsedData.length)
   const dataKey = columns[0]
+  const tableName = "data"
+
+  db = new sqlite3.Database(":memory:") // Using in-memory database for demonstration
+
+  // Create table with columns
+  const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (${columns
+    .map((column: string) => `${column} TEXT`)
+    .join(", ")})`
+
+  db.serialize(() => {
+    db.run(createTableQuery)
+
+    // Insert data into the table
+    const insertQuery = `INSERT INTO ${tableName} (${columns.join(
+      ", "
+    )}) VALUES (${columns.map(() => "?").join(", ")})`
+    const stmt = db.prepare(insertQuery)
+
+    data.forEach((row: any[]) => {
+      stmt.run(row)
+    })
+
+    stmt.finalize()
+  })
+
+  const sampleData = await queryDB("SELECT * FROM data LIMIT 3")
+
+  const schema = await getSchema(db, tableName)
 
   const aiState = getMutableAIState<typeof AI>()
 
   aiState.done({
     ...aiState.get(),
-    tableName: firstTable,
+    tableName: "data",
     dataKey,
     columns,
     sampleData,
-    schema: schemas[firstTable], // need to remove this later
+    schema,
     topK: 5000,
   })
 }
 
-async function queryDB(query: string): Promise<any[]> {
-  // Open a new connection if there is none
+// Function to retrieve schema
+function getSchema(db: Database, tableName: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT * FROM sqlite_master WHERE type='table' AND name='${tableName}'`,
+      (err, rows) => {
+        if (err) {
+          reject(err)
+        } else {
+          const schema = rows[0].sql
+          resolve(schema)
+        }
+      }
+    )
+  })
+}
+
+// Function to execute a query and return rows
+function queryDB(query: string): Promise<any[]> {
   if (!db) {
     throw error("no db connected!")
   }
 
-  // Query to get all todos from the "todo" table
-  const data = await db.all(query)
-  return data
+  return new Promise((resolve, reject) => {
+    db.all(query, (err: any, rows: any[]) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(rows)
+      }
+    })
+  })
 }
 
 const openai = new OpenAI({

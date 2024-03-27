@@ -5,6 +5,8 @@ import { useUIState, useActions, useAIState } from "ai/rsc"
 import type { AI } from "./action"
 import styled from "styled-components"
 import { options } from "./dataConfig"
+//@ts-ignore
+import { parse } from "papaparse"
 
 const App = styled.div`
   background: #f5f5f5;
@@ -89,16 +91,25 @@ export default function Page() {
   const { submitUserMessage, setupDB } = useActions<typeof AI>()
   const [aiState, setAiState] = useAIState()
 
-  const [selectedFile, setSelectedFile] = useState("Cars.db")
+  const [selectedFile, setSelectedFile] = useState(null)
 
   function handleSubmit(e: any) {
     e.preventDefault()
     // if successful, update the data
-    setupDB(selectedFile)
+
+    // parse the csv into json
+    parse(selectedFile, {
+      dynamicTyping: true,
+      complete: function (results) {
+        console.log(results.data)
+
+        setupDB(JSON.stringify(results.data))
+      },
+    })
   }
 
   function handleFileChange(e: any) {
-    setSelectedFile(e.target.value)
+    setSelectedFile(e.target.files[0])
   }
 
   const noData = !aiState?.sampleData || aiState.sampleData.length === 0
@@ -109,13 +120,7 @@ export default function Page() {
         <UploadForm>
           <h2>To chat with the AI you need some data!</h2>
           <Form>
-            <Select onChange={handleFileChange}>
-              {options.map(({ value, label }) => (
-                <option value={value} key={label}>
-                  {label}
-                </option>
-              ))}
-            </Select>
+            <input type="file" onChange={handleFileChange}></input>
             <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
           </Form>
         </UploadForm>
