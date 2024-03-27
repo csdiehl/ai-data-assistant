@@ -16,7 +16,8 @@ export const SkeletonChart = styled.div`
   border-radius: 8px;
   width: 100%;
   padding: 16px;
-  background: lightgrey;
+  background: linear-gradient(0.25turn, lightgrey, 10%, steelblue);
+  opacity: 0.7;
   height: 500px;
 `
 
