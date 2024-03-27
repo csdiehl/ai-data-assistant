@@ -4,7 +4,7 @@ import React, { useRef, useEffect } from "react"
 import * as Plot from "@observablehq/plot"
 
 interface ChartSpec {
-  type?: "line" | "scatter" | "area" | "heatmap"
+  type?: "line" | "scatter" | "area" | "heatmap" | "density"
   x: string
   y: string
   color?: string
@@ -67,6 +67,21 @@ function Mark({ x, y, color = "steelblue", type, data, dataKey }: ChartSpec) {
           sort: x,
           interval: 1,
           inset: 0.5,
+        }),
+      ]
+    case "density":
+      return [
+        Plot.density(data, {
+          x: x,
+          y: y,
+          stroke: color,
+          thresholds: 4,
+        }),
+        Plot.dot(data, {
+          x: x,
+          y: y,
+          fill: color,
+          r: 2,
         }),
       ]
     default:
