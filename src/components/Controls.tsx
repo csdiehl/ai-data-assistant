@@ -1,6 +1,6 @@
 import React from "react"
 import { MenuButton } from "./styles"
-import * as Papa from "papaparse"
+import { unparse } from "papaparse"
 import styled from "styled-components"
 
 const Container = styled.div`
@@ -16,7 +16,7 @@ interface Props {
 
 const Controls = ({ flip, data }: Props) => {
   function downloadData() {
-    const csv = Papa.unparse(data)
+    const csv = unparse(data)
     const blob = new Blob([csv], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")

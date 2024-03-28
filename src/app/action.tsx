@@ -80,6 +80,8 @@ async function setupDB(file: string) {
 
   const schema = await getSchema(db, tableName)
 
+  console.log(sampleData)
+
   const aiState = getMutableAIState<typeof AI>()
 
   aiState.done({

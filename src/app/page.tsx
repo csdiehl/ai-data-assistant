@@ -96,7 +96,7 @@ export default function Page() {
   const { submitUserMessage, setupDB } = useActions<typeof AI>()
   const [aiState, setAiState] = useAIState()
 
-  const [selectedFile, setSelectedFile] = useState(null)
+  const [selectedFile, setSelectedFile] = useState<File | string>("")
   const [length, setLength] = useState(0)
 
   function handleSubmit(e: any) {
@@ -107,10 +107,35 @@ export default function Page() {
       return
     }
 
+    function loadFile(results: any) {
+      const data = results.data
+      // fix spaces in column names
+      data[0] = data[0].map((d: string) => d.replace(" ", "_").trim())
+
+      console.log(data[0])
+
+      // pass to the AI
+      setupDB(JSON.stringify(data))
+      setLength(data.length)
+    }
+
+    const isURL =
+      typeof selectedFile === "string" && selectedFile.startsWith("https")
+
     //@ts-ignore
-    const isCSV = selectedFile.type === "text/csv"
+    const isCSV = selectedFile?.type === "text/csv"
     //@ts-ignore
-    const isJSON = selectedFile.type === "application/json"
+    const isJSON = selectedFile?.type === "application/json"
+
+    if (isURL) {
+      parse(selectedFile, {
+        download: true,
+        dynamicTyping: true,
+        // rest of config ...
+        complete: (results: any) => loadFile(results),
+      })
+      return
+    }
 
     if (!isCSV && !isJSON) {
       alert("Please select a CSV or JSON file")
@@ -121,10 +146,7 @@ export default function Page() {
     if (isCSV) {
       parse(selectedFile, {
         dynamicTyping: true,
-        complete: function (results: any) {
-          setupDB(JSON.stringify(results.data))
-          setLength(results.data.length)
-        },
+        complete: (results: any) => loadFile(results),
       })
     }
     if (isJSON) {
@@ -139,6 +161,10 @@ export default function Page() {
     setSelectedFile(e.target.files[0])
   }
 
+  function uploadFileFromURL(e) {
+    setSelectedFile(e.target.value)
+  }
+
   const noData = !aiState?.sampleData || aiState.sampleData.length === 0
 
   return (
@@ -147,7 +173,17 @@ export default function Page() {
         <UploadForm>
           <h2>To chat with the AI you need some data!</h2>
           <Form>
-            <FileInput type="file" onChange={handleFileChange}></FileInput>
+            <div>
+              <FileInput type="file" onChange={handleFileChange}></FileInput>
+              <label htmlFor="url-input">Or enter a URL:</label>
+              <input
+                id="url-input"
+                placeholder="https://example.com"
+                pattern="https://.*"
+                type="url"
+                onChange={uploadFileFromURL}
+              ></input>
+            </div>
             <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
           </Form>
         </UploadForm>
