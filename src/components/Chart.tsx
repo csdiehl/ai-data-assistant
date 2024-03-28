@@ -61,7 +61,10 @@ const Chart = ({
   return (
     <>
       <Controls data={data} flip={flip} />
-      <div ref={container}></div>
+      <div
+        style={{ height: 500, background: "transparent" }}
+        ref={container}
+      ></div>
     </>
   )
 }
@@ -103,9 +106,9 @@ function Mark({
         }),
       ]
     case "barX":
-      return [Plot.barX(data, { x: x, y: y, fill: color })]
+      return [Plot.barX(data, { x: x, y: y, fill: color, sort: { y: "-x" } })]
     case "barY":
-      return [Plot.barY(data, { x: x, y: y, fill: color })]
+      return [Plot.barY(data, { x: x, y: y, fill: color, sort: { x: "-y" } })]
     case "density":
       return [
         Plot.density(data, {

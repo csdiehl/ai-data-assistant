@@ -13,6 +13,22 @@ const App = styled.div`
   height: 100vh;
   padding: 16px;
   overflow-y: scroll;
+
+  input {
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #fff;
+    padding: 16px;
+    color: #555;
+  }
+
+  label {
+    margin: 0;
+    padding: 0;
+    font-size: 0.875rem;
+    line-height: 1rem;
+    color: #555;
+  }
 `
 
 const InputContainer = styled.div`
@@ -55,6 +71,12 @@ const UploadForm = styled.div`
   min-height: 200px;
 `
 
+const Inputs = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`
+
 const Submit = styled.button`
   padding: 8px;
   border-radius: 8px;
@@ -83,12 +105,7 @@ const Form = styled.form`
   padding: 24px;
 `
 
-const FileInput = styled.input`
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background: #fff;
-  padding: 16px;
-`
+const FileInput = styled.input``
 
 export default function Page() {
   const [inputValue, setInputValue] = useState("")
@@ -173,9 +190,9 @@ export default function Page() {
         <UploadForm>
           <h2>To chat with the AI you need some data!</h2>
           <Form>
-            <div>
+            <Inputs>
               <FileInput type="file" onChange={handleFileChange}></FileInput>
-              <label htmlFor="url-input">Or enter a URL:</label>
+              <label htmlFor="url-input">Or enter a URL to a CSV file</label>
               <input
                 id="url-input"
                 placeholder="https://example.com"
@@ -183,7 +200,7 @@ export default function Page() {
                 type="url"
                 onChange={uploadFileFromURL}
               ></input>
-            </div>
+            </Inputs>
             <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
           </Form>
         </UploadForm>
