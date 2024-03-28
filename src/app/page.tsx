@@ -38,7 +38,7 @@ const Message = styled.div<{ $aiMessage: boolean }>`
   ${(props) => props.$aiMessage && "align-self: flex-end"};
   border-radius: 8px;
   padding: 8px;
-  background: #eee;
+  background: ${(props) => (props.$aiMessage ? "none" : "#eee")};
   margin: 8px 0;
   width: 100%;
   max-width: ${(props) => (props.$aiMessage ? "800px" : "400px")};

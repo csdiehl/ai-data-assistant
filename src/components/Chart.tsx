@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react"
 import * as Plot from "@observablehq/plot"
-import { ChartControl } from "./styles"
+import Controls from "./Controls"
 
 interface ChartSpec {
   type?: "line" | "scatter" | "area" | "heatmap" | "density" | "barX" | "barY"
@@ -60,7 +60,7 @@ const Chart = ({
   }, [axes, color, data, type, dataKey, size])
   return (
     <>
-      <ChartControl onClick={flip}>Flip axes</ChartControl>
+      <Controls data={data} flip={flip} />
       <div ref={container}></div>
     </>
   )
