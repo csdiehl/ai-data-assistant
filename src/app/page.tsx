@@ -8,20 +8,14 @@ import styled from "styled-components"
 import { parse } from "papaparse"
 import Description from "@/components/Description"
 
+const inputHeight = 24
+
 const App = styled.div`
   background: #f5f5f5;
   color: #333;
   height: 100vh;
   padding: 16px;
   overflow-y: scroll;
-
-  input {
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background: #fff;
-    padding: 16px;
-    color: #555;
-  }
 
   label {
     margin: 0;
@@ -51,6 +45,12 @@ const Input = styled.input`
   padding: 0 8px;
 `
 
+const URLInput = styled.input`
+  height: ${inputHeight}px;
+  background: none;
+  border: none;
+`
+
 const Message = styled.div<{ $aiMessage: boolean }>`
   ${(props) => props.$aiMessage && "align-self: flex-end"};
   border-radius: 8px;
@@ -63,21 +63,6 @@ const Message = styled.div<{ $aiMessage: boolean }>`
   line-height: 1.25rem;
 `
 
-const UploadForm = styled.div`
-  border: 1px dotted grey;
-  padding: 16px;
-  border-radius: 8px;
-  margin: 160px auto;
-  max-width: 500px;
-  min-height: 200px;
-`
-
-const Inputs = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`
-
 const Submit = styled.button`
   padding: 8px;
   border-radius: 8px;
@@ -85,6 +70,7 @@ const Submit = styled.button`
   font-weight: bold;
   border: none;
   cursor: pointer;
+  height: 48px;
 
   $:hover {
     filter: brightness(80%);
@@ -104,6 +90,12 @@ const Form = styled.form`
   justify-content: center;
   gap: 16px;
   padding: 24px;
+`
+const EmptyState = styled.h2`
+  margin: 160px auto;
+  font-weight: lighter;
+  text-align: center;
+  color: grey;
 `
 
 const FileInput = styled.input``
@@ -191,84 +183,83 @@ export default function Page() {
 
   return (
     <App>
+      <Form>
+        <FileInput type="file" onChange={handleFileChange}></FileInput>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <label htmlFor="url-input">Or enter a URL to a CSV file</label>
+          <URLInput
+            id="url-input"
+            placeholder="https://example.com"
+            pattern="https://.*"
+            type="url"
+            onChange={uploadFileFromURL}
+          ></URLInput>
+        </div>
+
+        <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
+      </Form>
+
       {noData ? (
-        <UploadForm>
-          <h2>To chat with the AI you need some data!</h2>
-          <Form>
-            <Inputs>
-              <FileInput type="file" onChange={handleFileChange}></FileInput>
-              <label htmlFor="url-input">Or enter a URL to a CSV file</label>
-              <input
-                id="url-input"
-                placeholder="https://example.com"
-                pattern="https://.*"
-                type="url"
-                onChange={uploadFileFromURL}
-              ></input>
-            </Inputs>
-            <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
-          </Form>
-        </UploadForm>
+        <EmptyState>To chat with the AI you need some data!</EmptyState>
       ) : (
-        <>
-          <Messages>
-            <Description
-              data={aiState.dataSummary}
-              length={length}
-              vars={aiState.columns}
-            />
-            {
-              // View messages in UI state
-              messages.map((message, i) => (
-                <Message $aiMessage={i % 2 !== 0} key={message.id}>
-                  {message.display}
-                </Message>
-              ))
-            }
-          </Messages>
-
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault()
-
-              // Add user message to UI state
-              setMessages((currentMessages) => [
-                ...currentMessages,
-                {
-                  id: Date.now(),
-                  display: <div>{inputValue}</div>,
-                },
-              ])
-
-              // Submit and get response message
-              const responseMessage = await submitUserMessage(inputValue)
-              setMessages((currentMessages) => [
-                ...currentMessages,
-                responseMessage,
-              ])
-
-              setInputValue("")
-            }}
-          >
-            <InputContainer>
-              {selectedFile && (
-                <p style={{ marginBottom: "8px" }}>
-                  {/*@ts-ignore*/}
-                  Chatting with {selectedFile.name}{" "}
-                  <span style={{ color: "grey" }}>{length} rows</span>
-                </p>
-              )}
-              <Input
-                placeholder="Send a message..."
-                value={inputValue}
-                onChange={(event) => {
-                  setInputValue(event.target.value)
-                }}
-              />
-            </InputContainer>
-          </form>
-        </>
+        <Messages>
+          <Description
+            data={aiState.dataSummary}
+            length={length}
+            vars={aiState.columns}
+          />
+          {
+            // View messages in UI state
+            messages.map((message, i) => (
+              <Message $aiMessage={i % 2 !== 0} key={message.id}>
+                {message.display}
+              </Message>
+            ))
+          }
+        </Messages>
       )}
+
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault()
+
+          // Add user message to UI state
+          setMessages((currentMessages) => [
+            ...currentMessages,
+            {
+              id: Date.now(),
+              display: <div>{inputValue}</div>,
+            },
+          ])
+
+          // Submit and get response message
+          const responseMessage = await submitUserMessage(inputValue)
+          setMessages((currentMessages) => [
+            ...currentMessages,
+            responseMessage,
+          ])
+
+          setInputValue("")
+        }}
+      >
+        <InputContainer>
+          {selectedFile && (
+            <p style={{ marginBottom: "8px" }}>
+              {/*@ts-ignore*/}
+              Chatting with {selectedFile.name}{" "}
+              <span style={{ color: "grey" }}>{length} rows</span>
+            </p>
+          )}
+          <Input
+            disabled={noData}
+            placeholder="Send a message..."
+            value={inputValue}
+            onChange={(event) => {
+              setInputValue(event.target.value)
+            }}
+          />
+        </InputContainer>
+      </form>
     </App>
   )
 }
