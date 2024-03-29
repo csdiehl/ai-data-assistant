@@ -124,12 +124,9 @@ export default function Page() {
       return
     }
 
-    function loadFile(results: any) {
-      const data = results.data
+    function loadFile(data: any) {
       // fix spaces in column names
       data[0] = data[0].map((d: string) => d.replace(" ", "_").trim())
-
-      console.log(data[0])
 
       // pass to the AI
       setupDB(JSON.stringify(data))
@@ -145,16 +142,27 @@ export default function Page() {
     const isJSON = selectedFile?.type === "application/json"
 
     if (isURL) {
-      parse(selectedFile, {
-        download: true,
-        dynamicTyping: true,
-        // rest of config ...
-        complete: (results: any) => loadFile(results),
-      })
+      if (selectedFile.endsWith(".json")) {
+        fetch(selectedFile)
+          .then((response) => response.json())
+          .then((data) => {
+            const formatted = formatJSON(data)
+            loadFile(formatted)
+          })
+      } else if (selectedFile.endsWith(".csv")) {
+        parse(selectedFile, {
+          download: true,
+          dynamicTyping: true,
+          // rest of config ...
+          complete: (results: any) => loadFile(results.data),
+        })
+      } else {
+        console.error("Unsupported file type: not a raw csv or json")
+      }
       return
     }
 
-    if (!isCSV && !isJSON) {
+    if (!isCSV || !isJSON || typeof selectedFile === "string") {
       alert("Please select a CSV or JSON file")
       return
     }
@@ -163,13 +171,11 @@ export default function Page() {
     if (isCSV) {
       parse(selectedFile, {
         dynamicTyping: true,
-        complete: (results: any) => loadFile(results),
+        complete: (results: any) => loadFile(results.data),
       })
-    }
-    if (isJSON) {
+    } else {
       jsonFileToArrays(selectedFile).then((data) => {
-        setupDB(JSON.stringify(data))
-        setLength(data.length)
+        loadFile(data)
       })
     }
   }
@@ -178,7 +184,7 @@ export default function Page() {
     setSelectedFile(e.target.files[0])
   }
 
-  function uploadFileFromURL(e) {
+  function uploadFileFromURL(e: any) {
     setSelectedFile(e.target.value)
   }
 
@@ -284,6 +290,12 @@ async function jsonFileToArrays(jsonFile: File) {
   //@ts-ignore
   const jsonData = JSON.parse(fileContent)
 
+  const result = formatJSON(jsonData)
+
+  return result
+}
+
+function formatJSON(jsonData: any[]) {
   // Extract column names from the keys of the first object
   const columnNames = Object.keys(jsonData[0])
 
