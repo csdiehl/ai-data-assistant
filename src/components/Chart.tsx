@@ -65,11 +65,14 @@ const Chart = ({
   useEffect(() => {
     if (!container.current) return
 
-    const yOptions =
-      type === "scatter" ? { grid: true, type: scale.y } : { grid: true }
+    const yOptions = type === "scatter" ? { grid: true, type: scale.y } : {}
 
     const xOptions =
-      type === "scatter" ? { grid: true, type: scale.x } : { grid: true }
+      type === "scatter"
+        ? { grid: true, type: scale.x }
+        : type === "line"
+        ? { ticks: 5 }
+        : {}
 
     const { x, y } = axes
     const plot = Plot.plot({
@@ -115,9 +118,13 @@ function Mark({
   switch (type) {
     case "line":
       return [
-        Plot.axisX({ anchor: "bottom", ticks: 2 }),
-        Plot.lineY(data, { x, y, stroke: color, sort: x }),
-        Plot.dot(data, { x, y, fill: color, sort: x }),
+        Plot.lineY(data, {
+          x,
+          y,
+          stroke: color,
+          fill: "none",
+          sort: x,
+        }),
         Plot.tip(data, Plot.pointerX({ x: x, y: y, title: (d) => d[x] })),
       ]
     case "scatter":
