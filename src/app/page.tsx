@@ -8,20 +8,14 @@ import styled from "styled-components"
 import { parse } from "papaparse"
 import Description from "@/components/Description"
 
+const inputHeight = 24
+
 const App = styled.div`
   background: #f5f5f5;
   color: #333;
   height: 100vh;
   padding: 16px;
   overflow-y: scroll;
-
-  input {
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background: #fff;
-    padding: 16px;
-    color: #555;
-  }
 
   label {
     margin: 0;
@@ -51,6 +45,12 @@ const Input = styled.input`
   padding: 0 8px;
 `
 
+const URLInput = styled.input`
+  height: ${inputHeight}px;
+  background: none;
+  border: none;
+`
+
 const Message = styled.div<{ $aiMessage: boolean }>`
   ${(props) => props.$aiMessage && "align-self: flex-end"};
   border-radius: 8px;
@@ -70,6 +70,7 @@ const Submit = styled.button`
   font-weight: bold;
   border: none;
   cursor: pointer;
+  height: 48px;
 
   $:hover {
     filter: brightness(80%);
@@ -91,7 +92,16 @@ const Form = styled.form`
   padding: 24px;
 `
 
-const FileInput = styled.input``
+const EmptyState = styled.h2`
+  margin: 160px auto;
+  color: grey;
+  font-weight: lighter;
+  text-align: center;
+`
+
+const FileInput = styled.input`
+  height: ${inputHeight}px;
+`
 
 export default function Page() {
   const [inputValue, setInputValue] = useState("")
@@ -181,22 +191,20 @@ export default function Page() {
         <FileInput type="file" onChange={handleFileChange}></FileInput>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <label htmlFor="url-input">Or enter a URL to a CSV file</label>
-          <input
+          <URLInput
             id="url-input"
             placeholder="https://example.com"
             pattern="https://.*"
             type="url"
             onChange={uploadFileFromURL}
-          ></input>
+          ></URLInput>
         </div>
 
         <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
       </Form>
 
       {noData ? (
-        <div>
-          <h2>To chat with the AI you need some data!</h2>
-        </div>
+        <EmptyState>To chat with the AI you need some data!</EmptyState>
       ) : (
         <Messages>
           <Description
