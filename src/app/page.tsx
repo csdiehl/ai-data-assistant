@@ -163,21 +163,19 @@ export default function Page() {
       return
     }
 
-    if (!isCSV || !isJSON || typeof selectedFile === "string") {
-      alert("Please select a CSV or JSON file")
-      return
-    }
-
     // parse the csv into json
     if (isCSV) {
       parse(selectedFile, {
         dynamicTyping: true,
         complete: (results: any) => loadFile(results.data),
       })
-    } else {
+    } else if (isJSON) {
       jsonFileToArrays(selectedFile).then((data) => {
         loadFile(data)
       })
+    } else {
+      alert("Please select a CSV or JSON file")
+      return
     }
   }
 
