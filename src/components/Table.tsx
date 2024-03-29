@@ -4,6 +4,7 @@ import styled from "styled-components"
 import { max } from "d3-array"
 import React from "react"
 import Controls from "./Controls"
+import { primary } from "./settings"
 
 const TableContainer = styled.table`
   th,
@@ -26,7 +27,7 @@ const Cell = styled.td`
   text-transform: capitalize;
 `
 const Bar = styled.span<{ width: number }>`
-  background: linear-gradient(to right, teal, steelblue);
+  background: linear-gradient(to right, teal, ${primary});
   opacity: 0.8;
   height: 4px;
   border-radius: 4px;

@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useUIState, useActions, useAIState } from "ai/rsc"
 import type { AI } from "./action"
 import styled from "styled-components"
 //@ts-ignore
 import { parse } from "papaparse"
 import Description from "@/components/Description"
+import { primary } from "@/components/settings"
+import FileInput from "@/components/FileInput"
 
 const inputHeight = 24
 
@@ -27,10 +29,7 @@ const App = styled.div`
 `
 
 const InputContainer = styled.div`
-  position: absolute;
-  bottom: 16px;
-  left: 0;
-  margin: 0 8px;
+  margin: 16px 8px;
   width: calc(100% - 16px);
   max-width: 500px;
 `
@@ -38,11 +37,12 @@ const InputContainer = styled.div`
 const Input = styled.input`
   height: 48px;
   width: 100%;
-  border-radius: 8px;
-  background: #fff;
-  border: 1px solid #ccc;
-  color: black;
-  padding: 0 8px;
+  background: #f5f5f5;
+  border: none;
+  border-bottom: 2px solid ${primary};
+  color: ${primary};
+  font-size: 1rem;
+  line-height: 1rem;
 `
 
 const URLInput = styled.input`
@@ -66,7 +66,7 @@ const Message = styled.div<{ $aiMessage: boolean }>`
 const Submit = styled.button`
   padding: 8px;
   border-radius: 8px;
-  background: steelblue;
+  background: ${primary};
   font-weight: bold;
   border: none;
   cursor: pointer;
@@ -87,7 +87,7 @@ const Messages = styled.div`
 const Form = styled.form`
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 16px;
   padding: 24px;
 `
@@ -98,8 +98,6 @@ const EmptyState = styled.h2`
   color: grey;
 `
 
-const FileInput = styled.input``
-
 export default function Page() {
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useUIState<typeof AI>()
@@ -108,6 +106,7 @@ export default function Page() {
 
   const [selectedFile, setSelectedFile] = useState<File | string>("")
   const [length, setLength] = useState(0)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   function handleSubmit(e: any) {
     e.preventDefault()
@@ -171,22 +170,28 @@ export default function Page() {
     }
   }
 
-  function handleFileChange(e: any) {
-    setSelectedFile(e.target.files[0])
-  }
-
   function uploadFileFromURL(e: any) {
     setSelectedFile(e.target.value)
   }
+
+  useEffect(() => {
+    if (messages.length > 0 && inputRef?.current) {
+      // scroll to bottom of messages
+      inputRef.current.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [messages])
 
   const noData = !aiState?.sampleData || aiState.sampleData.length === 0
 
   return (
     <App>
       <Form>
-        <FileInput type="file" onChange={handleFileChange}></FileInput>
+        <FileInput
+          selectedFile={selectedFile}
+          setSelectedFile={setSelectedFile}
+        ></FileInput>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <label htmlFor="url-input">Or enter a URL to a CSV file</label>
+          <label htmlFor="url-input">Or enter a CSV or JSON URL</label>
           <URLInput
             id="url-input"
             placeholder="https://example.com"
@@ -196,11 +201,16 @@ export default function Page() {
           ></URLInput>
         </div>
 
-        <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
+        <Submit disabled={!noData} onClick={handleSubmit}>
+          Chat with your Data!
+        </Submit>
       </Form>
 
       {noData ? (
-        <EmptyState>To chat with the AI you need some data!</EmptyState>
+        <EmptyState>
+          Welcome to the AI Data Explorer. <br />
+          To chat with the AI you need some data!
+        </EmptyState>
       ) : (
         <Messages>
           <Description
@@ -216,50 +226,50 @@ export default function Page() {
               </Message>
             ))
           }
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+
+              // Add user message to UI state
+              setMessages((currentMessages) => [
+                ...currentMessages,
+                {
+                  id: Date.now(),
+                  display: <div>{inputValue}</div>,
+                },
+              ])
+
+              // Submit and get response message
+              const responseMessage = await submitUserMessage(inputValue)
+              setMessages((currentMessages) => [
+                ...currentMessages,
+                responseMessage,
+              ])
+
+              setInputValue("")
+            }}
+          >
+            <InputContainer>
+              {selectedFile && (
+                <p style={{ color: primary }}>
+                  {/*@ts-ignore*/}
+                  Chatting with {selectedFile.name}{" "}
+                  <span style={{ color: "grey" }}>{length} rows</span>
+                </p>
+              )}
+              <Input
+                ref={inputRef}
+                disabled={noData}
+                placeholder="Send a message..."
+                value={inputValue}
+                onChange={(event) => {
+                  setInputValue(event.target.value)
+                }}
+              />
+            </InputContainer>
+          </form>
         </Messages>
       )}
-
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault()
-
-          // Add user message to UI state
-          setMessages((currentMessages) => [
-            ...currentMessages,
-            {
-              id: Date.now(),
-              display: <div>{inputValue}</div>,
-            },
-          ])
-
-          // Submit and get response message
-          const responseMessage = await submitUserMessage(inputValue)
-          setMessages((currentMessages) => [
-            ...currentMessages,
-            responseMessage,
-          ])
-
-          setInputValue("")
-        }}
-      >
-        <InputContainer>
-          {selectedFile && (
-            <p style={{ marginBottom: "8px" }}>
-              {/*@ts-ignore*/}
-              Chatting with {selectedFile.name}{" "}
-              <span style={{ color: "grey" }}>{length} rows</span>
-            </p>
-          )}
-          <Input
-            disabled={noData}
-            placeholder="Send a message..."
-            value={inputValue}
-            onChange={(event) => {
-              setInputValue(event.target.value)
-            }}
-          />
-        </InputContainer>
-      </form>
     </App>
   )
 }

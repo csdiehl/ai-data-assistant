@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from "react"
 import * as Plot from "@observablehq/plot"
 import Controls from "./Controls"
+import { primary } from "./settings"
 
 interface ChartSpec {
   type?: "line" | "scatter" | "area" | "heatmap" | "density" | "barX" | "barY"
@@ -19,7 +20,7 @@ const Chart = ({
   data,
   x,
   y,
-  color = "steelblue",
+  color = primary,
   size,
   type = "scatter",
   dataKey,
