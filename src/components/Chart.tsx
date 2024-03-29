@@ -5,6 +5,7 @@ import * as Plot from "@observablehq/plot"
 import Controls from "./Controls"
 import { primary } from "./settings"
 
+const chartHeight = 400
 interface ChartSpec {
   type?: "line" | "scatter" | "area" | "heatmap" | "density" | "barX" | "barY"
   x: string
@@ -46,7 +47,7 @@ const Chart = ({
 
     const { x, y } = axes
     const plot = Plot.plot({
-      height: 500,
+      height: chartHeight,
       y: { grid: true },
       x: { grid: true, ticks: 5 },
       marginLeft: 80,
@@ -63,7 +64,7 @@ const Chart = ({
     <>
       <Controls data={data} flip={flip} />
       <div
-        style={{ height: 500, background: "transparent" }}
+        style={{ height: chartHeight, background: "transparent" }}
         ref={container}
       ></div>
     </>

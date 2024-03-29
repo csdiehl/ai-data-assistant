@@ -15,6 +15,7 @@ const FileInput = styled.input`
 const UploadButton = styled.button`
   background-color: ${primary};
   color: #fff;
+  margin-top: 4px;
   padding: 8px;
   border: none;
   border-radius: 8px;
