@@ -74,7 +74,8 @@ async function setupDB(file: string) {
     stmt.finalize()
   })
 
-  const sampleData = await queryDB("SELECT * FROM data LIMIT 3")
+  const allData = await queryDB("SELECT * FROM data LIMIT 10000")
+  const sampleData = allData.slice(0, 3)
 
   console.log(createTableQuery)
 
@@ -87,6 +88,7 @@ async function setupDB(file: string) {
   aiState.done({
     ...aiState.get(),
     tableName: "data",
+    dataSummary: allData,
     dataKey,
     columns,
     sampleData,
@@ -178,6 +180,8 @@ You can summarize data for the user, give them insights about the type of data t
 Here is a sample of the dataset:
 ${JSON.stringify(sampleData)}
 
+If the user just asks a general question about the data, without mentioning anything in the sample, just respond with text. 
+
 If the user asks a question about the data, create a syntactically correct sqlite3 query to run, using the following schema:
 ${dbSchema}
 Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most ${topK} results using the LIMIT clause.
@@ -206,11 +210,6 @@ Besides that, you can also chat with users and do some calculations if needed.`,
       { role: "user", content: userInput },
     ],
     functions: [
-      {
-        name: "describe_dataset",
-        description: "give a general description the dataset.",
-        parameters: z.object({}).required(),
-      },
       {
         name: "summarize_data",
         description:
@@ -272,13 +271,6 @@ Besides that, you can also chat with users and do some calculations if needed.`,
     }
   })
 
-  completion.onFunctionCall("describe_dataset", async () => {
-    const allData = await queryDB(`SELECT * FROM ${tableName};`)
-    reply.done(
-      <Description data={allData} length={allData.length} vars={columns} />
-    )
-  })
-
   completion.onFunctionCall("summarize_data", async ({ query, chartSpec }) => {
     const { x, y, title, type, color, size } = chartSpec
 
@@ -316,13 +308,15 @@ Besides that, you can also chat with users and do some calculations if needed.`,
     // Update the final AI state.
     aiState.done({
       ...aiState.get(),
+      dataSummary: response,
       messages: [
         ...aiState.get().messages,
+
         {
           role: "function",
           name: "summarize_data",
           // Content can be any string to provide context to the LLM in the rest of the conversation.
-          content: JSON.stringify(response),
+          content: `answered question using ${query}. Data from this answer is saved in the data summmary`,
         },
       ],
     })
@@ -342,6 +336,7 @@ const initialAIState: {
   tableName: string
   schema: string
   topK: number
+  dataSummary: any[]
   messages: {
     role: "user" | "assistant" | "system" | "function"
     content: string
@@ -356,6 +351,7 @@ const initialAIState: {
   tableName: "",
   schema: "",
   topK: 5000,
+  dataSummary: [], // this will hold all the data for a short time, then summaries
 }
 
 // The initial UI state that the client will keep track of, which contains the message IDs and their UI nodes.

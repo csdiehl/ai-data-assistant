@@ -6,6 +6,7 @@ import type { AI } from "./action"
 import styled from "styled-components"
 //@ts-ignore
 import { parse } from "papaparse"
+import Description from "@/components/Description"
 
 const App = styled.div`
   background: #f5f5f5;
@@ -213,6 +214,11 @@ export default function Page() {
       ) : (
         <>
           <Messages>
+            <Description
+              data={aiState.dataSummary}
+              length={length}
+              vars={aiState.columns}
+            />
             {
               // View messages in UI state
               messages.map((message, i) => (
