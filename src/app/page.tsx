@@ -63,21 +63,6 @@ const Message = styled.div<{ $aiMessage: boolean }>`
   line-height: 1.25rem;
 `
 
-const UploadForm = styled.div`
-  border: 1px dotted grey;
-  padding: 16px;
-  border-radius: 8px;
-  margin: 160px auto;
-  max-width: 500px;
-  min-height: 200px;
-`
-
-const Inputs = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`
-
 const Submit = styled.button`
   padding: 8px;
   border-radius: 8px;
@@ -100,7 +85,7 @@ const Messages = styled.div`
 
 const Form = styled.form`
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: 16px;
   padding: 24px;
@@ -113,6 +98,7 @@ export default function Page() {
   const [messages, setMessages] = useUIState<typeof AI>()
   const { submitUserMessage, setupDB } = useActions<typeof AI>()
   const [aiState, setAiState] = useAIState()
+  const [user, setUser] = useState(false)
 
   const [selectedFile, setSelectedFile] = useState<File | string>("")
   const [length, setLength] = useState(0)
@@ -163,21 +149,19 @@ export default function Page() {
       return
     }
 
-    if (!isCSV || !isJSON || typeof selectedFile === "string") {
-      alert("Please select a CSV or JSON file")
-      return
-    }
-
     // parse the csv into json
     if (isCSV) {
       parse(selectedFile, {
         dynamicTyping: true,
         complete: (results: any) => loadFile(results.data),
       })
-    } else {
+    } else if (isJSON) {
       jsonFileToArrays(selectedFile).then((data) => {
         loadFile(data)
       })
+    } else {
+      alert("Please select a CSV or JSON file")
+      return
     }
   }
 
@@ -193,84 +177,85 @@ export default function Page() {
 
   return (
     <App>
+      <Form>
+        <FileInput type="file" onChange={handleFileChange}></FileInput>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <label htmlFor="url-input">Or enter a URL to a CSV file</label>
+          <input
+            id="url-input"
+            placeholder="https://example.com"
+            pattern="https://.*"
+            type="url"
+            onChange={uploadFileFromURL}
+          ></input>
+        </div>
+
+        <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
+      </Form>
+
       {noData ? (
-        <UploadForm>
+        <div>
           <h2>To chat with the AI you need some data!</h2>
-          <Form>
-            <Inputs>
-              <FileInput type="file" onChange={handleFileChange}></FileInput>
-              <label htmlFor="url-input">Or enter a URL to a CSV file</label>
-              <input
-                id="url-input"
-                placeholder="https://example.com"
-                pattern="https://.*"
-                type="url"
-                onChange={uploadFileFromURL}
-              ></input>
-            </Inputs>
-            <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
-          </Form>
-        </UploadForm>
+        </div>
       ) : (
-        <>
-          <Messages>
-            <Description
-              data={aiState.dataSummary}
-              length={length}
-              vars={aiState.columns}
-            />
-            {
-              // View messages in UI state
-              messages.map((message, i) => (
-                <Message $aiMessage={i % 2 !== 0} key={message.id}>
-                  {message.display}
-                </Message>
-              ))
-            }
-          </Messages>
-
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault()
-
-              // Add user message to UI state
-              setMessages((currentMessages) => [
-                ...currentMessages,
-                {
-                  id: Date.now(),
-                  display: <div>{inputValue}</div>,
-                },
-              ])
-
-              // Submit and get response message
-              const responseMessage = await submitUserMessage(inputValue)
-              setMessages((currentMessages) => [
-                ...currentMessages,
-                responseMessage,
-              ])
-
-              setInputValue("")
-            }}
-          >
-            <InputContainer>
-              {selectedFile && (
-                <p style={{ marginBottom: "8px" }}>
-                  {/*@ts-ignore*/}
-                  Chatting with {selectedFile.name}{" "}
-                  <span style={{ color: "grey" }}>{length} rows</span>
-                </p>
-              )}
-              <Input
-                placeholder="Send a message..."
-                value={inputValue}
-                onChange={(event) => {
-                  setInputValue(event.target.value)
-                }}
-              />
-            </InputContainer>
-          </form>
-        </>
+        <Messages>
+          <Description
+            data={aiState.dataSummary}
+            length={length}
+            vars={aiState.columns}
+          />
+          {
+            // View messages in UI state
+            messages.map((message, i) => (
+              <Message $aiMessage={i % 2 !== 0} key={message.id}>
+                {message.display}
+              </Message>
+            ))
+          }
+        </Messages>
       )}
+
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault()
+
+          // Add user message to UI state
+          setMessages((currentMessages) => [
+            ...currentMessages,
+            {
+              id: Date.now(),
+              display: <div>{inputValue}</div>,
+            },
+          ])
+
+          // Submit and get response message
+          const responseMessage = await submitUserMessage(inputValue)
+          setMessages((currentMessages) => [
+            ...currentMessages,
+            responseMessage,
+          ])
+
+          setInputValue("")
+        }}
+      >
+        <InputContainer>
+          {selectedFile && (
+            <p style={{ marginBottom: "8px" }}>
+              {/*@ts-ignore*/}
+              Chatting with {selectedFile.name}{" "}
+              <span style={{ color: "grey" }}>{length} rows</span>
+            </p>
+          )}
+          <Input
+            disabled={noData}
+            placeholder="Send a message..."
+            value={inputValue}
+            onChange={(event) => {
+              setInputValue(event.target.value)
+            }}
+          />
+        </InputContainer>
+      </form>
     </App>
   )
 }
