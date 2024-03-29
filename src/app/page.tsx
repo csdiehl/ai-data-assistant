@@ -127,7 +127,7 @@ export default function Page() {
 
     function loadFile(data: any) {
       // fix spaces in column names
-      data[0] = data[0].map((d: string) => d.replace(" ", "_").trim())
+      data[0] = data[0].map((d: string) => d.replaceAll(" ", "_").trim())
 
       // pass to the AI
       setupDB(JSON.stringify(data))
