@@ -11,10 +11,12 @@ const Container = styled.div`
 
 interface Props {
   flip?: () => void
+  setScale?: any
   data: any[]
+  scale: { x: string; y: string }
 }
 
-const Controls = ({ flip, data }: Props) => {
+const Controls = ({ flip, data, setScale, scale }: Props) => {
   function downloadData() {
     const csv = unparse(data)
     const blob = new Blob([csv], { type: "text/csv" })
@@ -24,10 +26,21 @@ const Controls = ({ flip, data }: Props) => {
     a.download = "summary.csv"
     a.click()
   }
+
   return (
     <Container>
       {flip && <MenuButton onClick={flip}>Flip axes</MenuButton>}
       <MenuButton onClick={downloadData}> ↓CSV</MenuButton>
+      {setScale && (
+        <>
+          <MenuButton onClick={() => setScale("x")}>
+            X Scale: {scale.x}
+          </MenuButton>
+          <MenuButton onClick={() => setScale("y")}>
+            Y Scale: {scale.y}
+          </MenuButton>
+        </>
+      )}
     </Container>
   )
 }

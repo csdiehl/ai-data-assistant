@@ -17,6 +17,8 @@ interface ChartSpec {
   trace?: string // trace shows what the AI put in for the parameters
 }
 
+type ScaleType = "linear" | "log"
+
 const Chart = ({
   data,
   x,
@@ -35,6 +37,10 @@ const Chart = ({
     x,
     y,
   })
+  const [scale, setScale] = useState<{ x: ScaleType; y: ScaleType }>({
+    x: "linear",
+    y: "linear",
+  })
 
   function flip() {
     if (!x || !y) return
@@ -42,14 +48,34 @@ const Chart = ({
     setAxes((axes) => ({ x: axes.y, y: axes.x }))
   }
 
+  function handleScaleChange(axis: "x" | "y") {
+    if (axis === "x") {
+      setScale((scale) => ({
+        ...scale,
+        x: scale.x === "linear" ? "log" : "linear",
+      }))
+    } else {
+      setScale((scale) => ({
+        ...scale,
+        y: scale.y === "linear" ? "log" : "linear",
+      }))
+    }
+  }
+
   useEffect(() => {
     if (!container.current) return
+
+    const yOptions =
+      type === "scatter" ? { grid: true, type: scale.y } : { grid: true }
+
+    const xOptions =
+      type === "scatter" ? { grid: true, type: scale.x } : { grid: true }
 
     const { x, y } = axes
     const plot = Plot.plot({
       height: chartHeight,
-      y: { grid: true },
-      x: { grid: true, ticks: 5 },
+      y: yOptions,
+      x: xOptions,
       marginLeft: 80,
       color: { legend: true },
       r: { legend: true },
@@ -59,15 +85,20 @@ const Chart = ({
     container.current.append(plot)
 
     return () => plot.remove()
-  }, [axes, color, data, type, dataKey, size])
+  }, [axes, color, data, type, dataKey, size, scale])
   return (
-    <>
-      <Controls data={data} flip={flip} />
+    <div>
+      <Controls
+        scale={scale}
+        data={data}
+        flip={flip}
+        setScale={type === "scatter" ? handleScaleChange : null}
+      />
       <div
         style={{ height: chartHeight, background: "transparent" }}
         ref={container}
       ></div>
-    </>
+    </div>
   )
 }
 

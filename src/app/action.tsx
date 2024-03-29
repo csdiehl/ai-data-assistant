@@ -235,7 +235,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
                   "The type of chart to render to show the results of the query, based on the type of variables the user has given. For simple queries with one text and one numeric variable, always use a table, unless the user requests a chart."
                 ),
               x: z.string().describe("The x-axis variable."),
-              y: z.string().optional().describe("The y-axis variable."),
+              y: z.string().describe("The y-axis variable."),
               size: z
                 .string()
                 .optional()
