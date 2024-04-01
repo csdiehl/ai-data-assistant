@@ -7,6 +7,8 @@ import styled from "styled-components"
 //@ts-ignore
 import { parse } from "papaparse"
 import Description from "@/components/Description"
+import { signOut } from "@/firebase/useAuth"
+// import { useGoogleSignIn } from "@/firebase/auth"
 
 const inputHeight = 24
 
@@ -108,7 +110,6 @@ export default function Page() {
   const [messages, setMessages] = useUIState<typeof AI>()
   const { submitUserMessage, setupDB } = useActions<typeof AI>()
   const [aiState, setAiState] = useAIState()
-  const [user, setUser] = useState(false)
 
   const [selectedFile, setSelectedFile] = useState<File | string>("")
   const [length, setLength] = useState(0)
@@ -201,6 +202,7 @@ export default function Page() {
         </div>
 
         <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
+        <button onClick={signOut}>Log out</button>
       </Form>
 
       {noData ? (
