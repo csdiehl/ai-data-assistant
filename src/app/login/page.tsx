@@ -16,6 +16,24 @@ const Login = styled.button`
   color: black;
 `
 
+const Form = styled.form`
+  h1 {
+    color: grey;
+    font-weight: lighter;
+    text-align: center;
+    margin: 16px 0;
+  }
+`
+
+const Container = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  height: 100vh;
+  width: 100%;
+`
+
 export default function Page() {
   const { setUser } = useAuth()
   const router = useRouter()
@@ -38,10 +56,13 @@ export default function Page() {
   }, [router, setUser])
 
   return (
-    <form>
-      <Login onClick={signIn} type="submit">
-        Sign in with Google
-      </Login>
-    </form>
+    <Container>
+      <Form>
+        <h1>AI Data Explorer</h1>
+        <Login onClick={signIn} type="submit">
+          Sign in with Google
+        </Login>
+      </Form>
+    </Container>
   )
 }

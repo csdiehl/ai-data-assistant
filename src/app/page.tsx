@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useUIState, useActions, useAIState } from "ai/rsc"
 import type { AI } from "./action"
 import styled from "styled-components"
@@ -118,6 +118,10 @@ export default function Page() {
 
   const router = useRouter()
 
+  useEffect(() => {
+    if (user == null) router.push("/login")
+  }, [user, router])
+
   const [selectedFile, setSelectedFile] = useState<File | string>("")
   const [length, setLength] = useState(0)
 
@@ -214,13 +218,14 @@ export default function Page() {
 
         <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
         <div>
-          <p>{user?.displayName}</p>
           <button onClick={logOut}>Log out</button>
         </div>
       </Form>
 
       {noData ? (
-        <EmptyState>To chat with the AI you need some data!</EmptyState>
+        <EmptyState>
+          Welcome, {user?.displayName}. To chat with the AI you need some data!
+        </EmptyState>
       ) : (
         <Messages>
           <Description
