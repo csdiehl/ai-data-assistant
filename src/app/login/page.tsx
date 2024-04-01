@@ -1,11 +1,12 @@
 "use client"
 
-import { signInWithGoogle } from "@/firebase/useAuth"
-import { useState, useEffect } from "react"
-import styled from "styled-components"
-import { User, onAuthStateChanged } from "firebase/auth"
 import { auth } from "@/firebase/config"
+import { signInWithGoogle } from "@/firebase/useAuth"
+import { onAuthStateChanged } from "firebase/auth"
 import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+import styled from "styled-components"
+import { useAuth } from "../context"
 
 const Login = styled.button`
   height: 48px;
@@ -16,7 +17,7 @@ const Login = styled.button`
 `
 
 export default function Page() {
-  const [user, setUser] = useState<User | null>(null)
+  const { setUser } = useAuth()
   const router = useRouter()
 
   function signIn(e) {
@@ -30,12 +31,11 @@ export default function Page() {
         setUser(user)
         router.push("/")
       } else {
+        router.push("/login")
         console.log("no user")
       }
     })
-  }, [router])
-
-  console.log(user)
+  }, [router, setUser])
 
   return (
     <form>

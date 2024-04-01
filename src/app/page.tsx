@@ -9,6 +9,7 @@ import { parse } from "papaparse"
 import Description from "@/components/Description"
 import { signOut } from "@/firebase/useAuth"
 import { useRouter } from "next/navigation"
+import { useAuth } from "./context"
 // import { useGoogleSignIn } from "@/firebase/auth"
 
 const inputHeight = 24
@@ -107,10 +108,13 @@ const FileInput = styled.input`
 `
 
 export default function Page() {
+  const { user } = useAuth()
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useUIState<typeof AI>()
   const { submitUserMessage, setupDB } = useActions<typeof AI>()
   const [aiState, setAiState] = useAIState()
+
+  console.log("user in page", user)
 
   const router = useRouter()
 
@@ -189,7 +193,6 @@ export default function Page() {
 
   function logOut() {
     signOut()
-    router.push("/login")
   }
 
   const noData = !aiState?.sampleData || aiState.sampleData.length === 0
@@ -210,7 +213,10 @@ export default function Page() {
         </div>
 
         <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
-        <button onClick={logOut}>Log out</button>
+        <div>
+          <p>{user?.displayName}</p>
+          <button onClick={logOut}>Log out</button>
+        </div>
       </Form>
 
       {noData ? (

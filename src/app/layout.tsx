@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import { AI } from "./action"
 import "./globals.css"
 import StyledComponentsRegistry from "@/lib/registry"
+import AuthProvider from "./context"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -21,7 +22,9 @@ export default function RootLayout({
       <body className={inter.className}>
         {/*@ts-ignore*/}
         <AI>
-          <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+          <StyledComponentsRegistry>
+            <AuthProvider>{children}</AuthProvider>
+          </StyledComponentsRegistry>
         </AI>
       </body>
     </html>
