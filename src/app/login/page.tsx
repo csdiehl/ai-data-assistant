@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import styled from "styled-components"
 import { User, onAuthStateChanged } from "firebase/auth"
 import { auth } from "@/firebase/config"
+import { redirect } from "next/navigation"
 
 const Login = styled.button`
   height: 48px;
@@ -26,6 +27,7 @@ export default function Page() {
     onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user)
+        redirect("/")
       } else {
         console.log("no user")
       }

@@ -8,6 +8,7 @@ import styled from "styled-components"
 import { parse } from "papaparse"
 import Description from "@/components/Description"
 import { signOut } from "@/firebase/useAuth"
+import { redirect } from "next/navigation"
 // import { useGoogleSignIn } from "@/firebase/auth"
 
 const inputHeight = 24
@@ -184,6 +185,11 @@ export default function Page() {
     setSelectedFile(e.target.value)
   }
 
+  function logOut() {
+    signOut()
+    redirect("/login")
+  }
+
   const noData = !aiState?.sampleData || aiState.sampleData.length === 0
 
   return (
@@ -202,7 +208,7 @@ export default function Page() {
         </div>
 
         <Submit onClick={handleSubmit}>Chat with your Data!</Submit>
-        <button onClick={signOut}>Log out</button>
+        <button onClick={logOut}>Log out</button>
       </Form>
 
       {noData ? (
