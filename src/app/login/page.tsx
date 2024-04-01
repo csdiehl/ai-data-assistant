@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import styled from "styled-components"
 import { useAuth } from "../context"
+import { addData } from "@/firebase/database"
 
 const Login = styled.button`
   height: 48px;
@@ -46,7 +47,17 @@ export default function Page() {
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        // save the info in context for other page to access
         setUser(user)
+        // add the user to the database
+        addData("users", user.uid, {
+          name: user.displayName,
+          uid: user.uid,
+        }).then(({ result, error }) => {
+          if (error) console.log(error)
+          return result
+        })
+        // redirect to the home page
         router.push("/")
       } else {
         router.push("/login")

@@ -111,8 +111,6 @@ export default function Page() {
   const { submitUserMessage, setupDB } = useActions<typeof AI>()
   const [aiState, setAiState] = useAIState()
 
-  console.log("user in page", user)
-
   const router = useRouter()
 
   useEffect(() => {
