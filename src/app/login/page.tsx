@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import styled from "styled-components"
 import { User, onAuthStateChanged } from "firebase/auth"
 import { auth } from "@/firebase/config"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 
 const Login = styled.button`
   height: 48px;
@@ -17,6 +17,7 @@ const Login = styled.button`
 
 export default function Page() {
   const [user, setUser] = useState<User | null>(null)
+  const router = useRouter()
 
   function signIn(e) {
     e.preventDefault()
@@ -27,12 +28,12 @@ export default function Page() {
     onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user)
-        redirect("/")
+        router.push("/")
       } else {
         console.log("no user")
       }
     })
-  }, [])
+  }, [router])
 
   console.log(user)
 

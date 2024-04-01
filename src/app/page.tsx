@@ -8,7 +8,7 @@ import styled from "styled-components"
 import { parse } from "papaparse"
 import Description from "@/components/Description"
 import { signOut } from "@/firebase/useAuth"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 // import { useGoogleSignIn } from "@/firebase/auth"
 
 const inputHeight = 24
@@ -112,6 +112,8 @@ export default function Page() {
   const { submitUserMessage, setupDB } = useActions<typeof AI>()
   const [aiState, setAiState] = useAIState()
 
+  const router = useRouter()
+
   const [selectedFile, setSelectedFile] = useState<File | string>("")
   const [length, setLength] = useState(0)
 
@@ -187,7 +189,7 @@ export default function Page() {
 
   function logOut() {
     signOut()
-    redirect("/login")
+    router.push("/login")
   }
 
   const noData = !aiState?.sampleData || aiState.sampleData.length === 0
