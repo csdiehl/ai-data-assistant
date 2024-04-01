@@ -3,7 +3,9 @@
 import React, { useRef, useEffect, useState } from "react"
 import * as Plot from "@observablehq/plot"
 import Controls from "./Controls"
+import { primary } from "./settings"
 
+const chartHeight = 400
 interface ChartSpec {
   type?: "line" | "scatter" | "area" | "heatmap" | "density" | "barX" | "barY"
   x: string
@@ -15,11 +17,13 @@ interface ChartSpec {
   trace?: string // trace shows what the AI put in for the parameters
 }
 
+type ScaleType = "linear" | "log"
+
 const Chart = ({
   data,
   x,
   y,
-  color = "steelblue",
+  color = primary,
   size,
   type = "scatter",
   dataKey,
@@ -33,6 +37,10 @@ const Chart = ({
     x,
     y,
   })
+  const [scale, setScale] = useState<{ x: ScaleType; y: ScaleType }>({
+    x: "linear",
+    y: "linear",
+  })
 
   function flip() {
     if (!x || !y) return
@@ -40,14 +48,37 @@ const Chart = ({
     setAxes((axes) => ({ x: axes.y, y: axes.x }))
   }
 
+  function handleScaleChange(axis: "x" | "y") {
+    if (axis === "x") {
+      setScale((scale) => ({
+        ...scale,
+        x: scale.x === "linear" ? "log" : "linear",
+      }))
+    } else {
+      setScale((scale) => ({
+        ...scale,
+        y: scale.y === "linear" ? "log" : "linear",
+      }))
+    }
+  }
+
   useEffect(() => {
     if (!container.current) return
 
+    const yOptions = type === "scatter" ? { grid: true, type: scale.y } : {}
+
+    const xOptions =
+      type === "scatter"
+        ? { grid: true, type: scale.x }
+        : type === "line"
+        ? { ticks: 5 }
+        : {}
+
     const { x, y } = axes
     const plot = Plot.plot({
-      height: 500,
-      y: { grid: true },
-      x: { grid: true, ticks: 5 },
+      height: chartHeight,
+      y: yOptions,
+      x: xOptions,
       marginLeft: 80,
       color: { legend: true },
       r: { legend: true },
@@ -57,15 +88,20 @@ const Chart = ({
     container.current.append(plot)
 
     return () => plot.remove()
-  }, [axes, color, data, type, dataKey, size])
+  }, [axes, color, data, type, dataKey, size, scale])
   return (
-    <>
-      <Controls data={data} flip={flip} />
+    <div>
+      <Controls
+        scale={scale}
+        data={data}
+        flip={flip}
+        setScale={type === "scatter" ? handleScaleChange : null}
+      />
       <div
-        style={{ height: 500, background: "transparent" }}
+        style={{ height: chartHeight, background: "transparent" }}
         ref={container}
       ></div>
-    </>
+    </div>
   )
 }
 
@@ -82,9 +118,13 @@ function Mark({
   switch (type) {
     case "line":
       return [
-        Plot.axisX({ anchor: "bottom", ticks: 2 }),
-        Plot.lineY(data, { x, y, stroke: color, sort: x }),
-        Plot.dot(data, { x, y, fill: color, sort: x }),
+        Plot.lineY(data, {
+          x,
+          y,
+          stroke: color,
+          fill: "none",
+          sort: x,
+        }),
         Plot.tip(data, Plot.pointerX({ x: x, y: y, title: (d) => d[x] })),
       ]
     case "scatter":

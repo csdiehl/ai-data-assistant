@@ -184,8 +184,7 @@ If the user just asks a general question about the data, without mentioning anyt
 
 If the user asks a question about the data, create a syntactically correct sqlite3 query to run, using the following schema:
 ${dbSchema}
-Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most ${topK} results using the LIMIT clause.
-You can order the results by a relevant column to return the most interesting examples in the database.
+You can sort the results by a relevant column to return the most interesting examples in the database. If sorting, always limit to the top 20 results using the LIMIT clause.
 Never query for all the columns from a specific table, only ask for a the few relevant columns given the question.
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 To use your query to interact with the database, call \`summarize_data\`. 
@@ -198,7 +197,7 @@ For barX, the text variable should be on the y axis.
 Line or area charts show how a variable has changed over time. In line or area charts, time goes on the x axis. 
 
 For two or more numeric variables, use a scatter, line or area chart. 
--Scatter plots show the relationship between two or more unordered numeric variable. They could also show a category by size or color.
+-Scatter plots show the relationship between two or more unordered numeric variable. They can also show categories by size and color.
 -Density can be used for a scatter plot with a lot of points.
 
 For two categorical variables, and one numeric, use a heatmap. 

@@ -20,6 +20,8 @@ You can currently run this locally to chat with your data.
 
 There are a few sample datasets you can choose from in the `exampleData` folder. You can also add your own by uploading a JSON or csv file. It will be erased when you close the tab or refresh the page.
 
+![image](./ai_file_upload.png)
+
 Make sure to add your OpenAI apiKey in a new file named `.env.local` at the root.
 
 Then, run the development server:

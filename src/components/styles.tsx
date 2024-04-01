@@ -1,6 +1,7 @@
 "use client"
 
 import styled from "styled-components"
+import { primary } from "./settings"
 
 export const Card = styled.div`
   padding: 8px;
@@ -16,7 +17,7 @@ export const SkeletonChart = styled.div`
   border-radius: 8px;
   width: 100%;
   padding: 16px;
-  background: linear-gradient(0.25turn, lightgrey, 10%, steelblue);
+  background: linear-gradient(0.25turn, lightgrey, 10%, ${primary});
   opacity: 0.7;
   height: 500px;
 `
