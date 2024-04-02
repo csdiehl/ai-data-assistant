@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react"
-import { listUserFiles, deleteFile } from "@/firebase/storage"
+import {
+  listUserFiles,
+  deleteFile,
+  createDownloadURL,
+} from "@/firebase/storage"
 import styled from "styled-components"
 import { primary } from "./settings"
 
@@ -26,7 +30,13 @@ const Header = styled.h3`
   padding: 8px 0;
 `
 
-const FileList = ({ userId }: { userId: string }) => {
+const FileList = ({
+  userId,
+  setSelectedFile,
+}: {
+  userId: string
+  setSelectedFile: (file: string) => void
+}) => {
   const [files, setFiles] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -44,6 +54,12 @@ const FileList = ({ userId }: { userId: string }) => {
     })
   }
 
+  function loadFile(name: string) {
+    createDownloadURL(userId, name).then((url) => {
+      setSelectedFile(url)
+    })
+  }
+
   return (
     <div>
       <Header>Your Data Snapshots</Header>
@@ -51,7 +67,10 @@ const FileList = ({ userId }: { userId: string }) => {
         {files.length > 0 &&
           files.map((name) => (
             <li key={name}>
-              <p>{name}</p>
+              <button style={{ all: "unset" }} onClick={() => loadFile(name)}>
+                <p>{name}</p>
+              </button>
+
               <button
                 style={{ all: "unset" }}
                 onClick={() => deleteAndRefresh(userId, name)}

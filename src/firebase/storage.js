@@ -1,5 +1,11 @@
 import { storage } from "./config"
-import { ref, uploadBytes, listAll, deleteObject } from "firebase/storage"
+import {
+  ref,
+  uploadBytes,
+  listAll,
+  deleteObject,
+  getDownloadURL,
+} from "firebase/storage"
 
 const dataBucketName = "datasets"
 
@@ -49,4 +55,12 @@ export async function listUserFiles(user) {
   }
 
   return files
+}
+
+// load file
+export async function createDownloadURL(user, fileName) {
+  const pathReference = ref(storage, `${dataBucketName}/${user}/${fileName}`)
+
+  const url = await getDownloadURL(pathReference)
+  return url
 }

@@ -154,15 +154,17 @@ export default function Page() {
     //@ts-ignore
     const isJSON = selectedFile?.type === "application/json"
 
+    console.log("file check", selectedFile, isURL)
+
     if (isURL) {
-      if (selectedFile.endsWith(".json")) {
+      if (checkFileType(selectedFile, ".json")) {
         fetch(selectedFile)
           .then((response) => response.json())
           .then((data) => {
             const formatted = formatJSON(data)
             loadFile(formatted)
           })
-      } else if (selectedFile.endsWith(".csv")) {
+      } else if (checkFileType(selectedFile, ".csv")) {
         parse(selectedFile, {
           download: true,
           dynamicTyping: true,
@@ -237,7 +239,9 @@ export default function Page() {
             Welcome, {user?.displayName} <br />
             To chat with the AI you need some data!{" "}
           </h2>
-          {user && <FileList userId={user.uid} />}
+          {user && (
+            <FileList setSelectedFile={setSelectedFile} userId={user.uid} />
+          )}
         </EmptyState>
       ) : (
         <Messages>
@@ -300,6 +304,10 @@ export default function Page() {
       )}
     </App>
   )
+}
+
+function checkFileType(url: string, ext: string) {
+  return url.split("?")[0].endsWith(ext)
 }
 
 async function jsonFileToArrays(jsonFile: File) {

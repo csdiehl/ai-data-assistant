@@ -23,4 +23,6 @@ if (!getApps().length) {
 const auth = getAuth(firebase_app)
 const storage = getStorage(firebase_app)
 
+export default firebase_app
+
 export { firebase_app, auth, storage }
