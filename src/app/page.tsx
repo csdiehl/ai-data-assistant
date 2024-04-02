@@ -69,12 +69,13 @@ const Message = styled.div<{ $aiMessage: boolean }>`
   line-height: 1.25rem;
 `
 
-const Submit = styled.button`
+const Submit = styled.button<{ ghost?: boolean }>`
   padding: 8px;
   border-radius: 8px;
-  background: ${primary};
+  background: ${(props) => (props.ghost ? "none" : primary)};
   font-weight: bold;
-  border: none;
+  border: ${(props) => (props.ghost ? `2px solid ${primary}` : "none")};
+  color: ${(props) => (props.ghost ? `${primary}` : "#FFF")};
   cursor: pointer;
   height: 48px;
   height: 48px;
@@ -98,11 +99,17 @@ const Form = styled.form`
   gap: 16px;
   padding: 24px;
 `
-const EmptyState = styled.h2`
+const EmptyState = styled.div`
   margin: 160px auto;
-  font-weight: lighter;
-  text-align: center;
-  color: grey;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  h2 {
+    font-weight: lighter;
+    text-align: center;
+    color: grey;
+  }
 `
 
 export default function Page() {
@@ -219,14 +226,18 @@ export default function Page() {
         <Submit disabled={!noData} onClick={handleSubmit}>
           Chat with your Data!
         </Submit>
-        <button onClick={() => signOut()}>Log Out</button>
-        {user && <FileList userId={user.uid} />}
+        <Submit ghost onClick={() => signOut()}>
+          Log Out
+        </Submit>
       </Form>
 
       {noData ? (
         <EmptyState>
-          Welcome, {user?.displayName} <br />
-          To chat with the AI you need some data!
+          <h2>
+            Welcome, {user?.displayName} <br />
+            To chat with the AI you need some data!{" "}
+          </h2>
+          {user && <FileList userId={user.uid} />}
         </EmptyState>
       ) : (
         <Messages>
