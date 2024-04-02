@@ -52,9 +52,11 @@ const Input = styled.input`
 `
 
 const URLInput = styled.input`
+  all: unset;
   height: ${inputHeight}px;
   background: none;
   border: none;
+  color: ${primary} !important;
 `
 
 const Message = styled.div<{ $aiMessage: boolean }>`
@@ -80,8 +82,12 @@ const Submit = styled.button<{ $ghost?: boolean }>`
   height: 48px;
   height: 48px;
 
-  $:hover {
+  &:hover {
     filter: brightness(80%);
+  }
+
+  &:disabled {
+    background: lightgrey;
   }
 `
 
@@ -126,6 +132,7 @@ export default function Page() {
   }, [user, router])
 
   const [selectedFile, setSelectedFile] = useState<File | string>("")
+  const selectedURL = typeof selectedFile === "string" ? selectedFile : ""
   const [length, setLength] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -217,6 +224,7 @@ export default function Page() {
         <div style={{ display: "flex", flexDirection: "column" }}>
           <label htmlFor="url-input">Or enter a CSV or JSON URL</label>
           <URLInput
+            value={selectedURL}
             id="url-input"
             placeholder="https://example.com"
             pattern="https://.*"
@@ -225,7 +233,7 @@ export default function Page() {
           ></URLInput>
         </div>
 
-        <Submit disabled={!noData} onClick={handleSubmit}>
+        <Submit disabled={!noData || !selectedFile} onClick={handleSubmit}>
           Chat with your Data!
         </Submit>
         <Submit $ghost onClick={() => signOut()}>

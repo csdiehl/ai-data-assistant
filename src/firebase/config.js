@@ -23,6 +23,25 @@ if (!getApps().length) {
 const auth = getAuth(firebase_app)
 const storage = getStorage(firebase_app)
 
+// update the cors headers on storage to allow downloads from any domain
+/*
+const bucketName = "gs://ai-data-assistant-8a2c9.appspot.com"
+async function configureBucketCors() {
+  await storage.bucket(bucketName).setCorsConfiguration([
+    {
+      maxAgeSeconds: 3600,
+      method: ["GET"],
+      origin: ["*"],
+    },
+  ])
+
+  console.log(`Bucket ${bucketName} was updated with a CORS config
+      to allow ${method} requests from ${origin}`)
+}
+
+configureBucketCors().catch(console.error)
+*/
+
 export default firebase_app
 
 export { firebase_app, auth, storage }
