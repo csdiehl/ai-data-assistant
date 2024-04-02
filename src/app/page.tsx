@@ -8,6 +8,7 @@ import type { AI } from "./action"
 import Description from "@/components/Description"
 import FileInput from "@/components/FileInput"
 import { primary } from "@/components/settings"
+import FileList from "@/components/FileList"
 import { parse } from "papaparse"
 
 import { signOut } from "@/firebase/useAuth"
@@ -219,6 +220,7 @@ export default function Page() {
           Chat with your Data!
         </Submit>
         <button onClick={() => signOut()}>Log Out</button>
+        {user && <FileList userId={user.uid} />}
       </Form>
 
       {noData ? (
