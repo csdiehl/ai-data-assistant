@@ -69,13 +69,13 @@ const Message = styled.div<{ $aiMessage: boolean }>`
   line-height: 1.25rem;
 `
 
-const Submit = styled.button<{ ghost?: boolean }>`
+const Submit = styled.button<{ $ghost?: boolean }>`
   padding: 8px;
   border-radius: 8px;
-  background: ${(props) => (props.ghost ? "none" : primary)};
+  background: ${(props) => (props.$ghost ? "none" : primary)};
   font-weight: bold;
-  border: ${(props) => (props.ghost ? `2px solid ${primary}` : "none")};
-  color: ${(props) => (props.ghost ? `${primary}` : "#FFF")};
+  border: ${(props) => (props.$ghost ? `2px solid ${primary}` : "none")};
+  color: ${(props) => (props.$ghost ? `${primary}` : "#FFF")};
   cursor: pointer;
   height: 48px;
   height: 48px;
@@ -226,7 +226,7 @@ export default function Page() {
         <Submit disabled={!noData} onClick={handleSubmit}>
           Chat with your Data!
         </Submit>
-        <Submit ghost onClick={() => signOut()}>
+        <Submit $ghost onClick={() => signOut()}>
           Log Out
         </Submit>
       </Form>

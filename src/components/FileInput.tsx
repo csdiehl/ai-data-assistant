@@ -30,13 +30,11 @@ const FileUpload = ({ selectedFile, setSelectedFile }) => {
   // when the Button component is clicked
   const handleClick = (event) => {
     event.preventDefault()
-    console.log(hiddenFileInput.current)
     hiddenFileInput.current.click()
   }
   // Call a function (passed as a prop from the parent component)
   // to handle the user-selected file
   const handleChange = (event) => {
-    console.log(event)
     const fileUploaded = event.target.files[0]
     setSelectedFile(fileUploaded)
   }

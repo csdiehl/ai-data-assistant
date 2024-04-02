@@ -1,5 +1,5 @@
 import { storage } from "./config"
-import { ref, uploadBytes, listAll } from "firebase/storage"
+import { ref, uploadBytes, listAll, deleteObject } from "firebase/storage"
 
 const dataBucketName = "datasets"
 
@@ -17,6 +17,19 @@ export function uploadFile(data, user, fileName) {
       console.error(error)
       return "error uploading file"
     })
+}
+
+// delete a file
+export async function deleteFile(user, fileName) {
+  // Create a reference to the file to delete
+  const objectRef = ref(storage, `datasets/${user}/${fileName}`)
+
+  try {
+    await deleteObject(objectRef)
+    return "file deleted"
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 // list files
