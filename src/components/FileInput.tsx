@@ -1,4 +1,4 @@
-import React, { useRef } from "react"
+import React, { ChangeEvent, DragEvent, useRef } from "react"
 import styled from "styled-components"
 import { primary } from "./settings"
 
@@ -22,28 +22,34 @@ const UploadButton = styled.button`
   cursor: pointer;
 `
 
-const FileUpload = ({ selectedFile, setSelectedFile }) => {
+interface Props {
+  selectedFile: File | string
+  setSelectedFile: any
+}
+
+const FileUpload = ({ selectedFile, setSelectedFile }: Props) => {
   // Create a reference to the hidden file input element
   const hiddenFileInput = useRef<HTMLInputElement>(null)
 
   // Programatically click the hidden file input element
   // when the Button component is clicked
-  const handleClick = (event) => {
+  const handleClick = (event: any) => {
+    if (!hiddenFileInput?.current) return
     event.preventDefault()
     hiddenFileInput.current.click()
   }
   // Call a function (passed as a prop from the parent component)
   // to handle the user-selected file
-  const handleChange = (event) => {
+  const handleChange = (event: any) => {
     const fileUploaded = event.target.files[0]
     setSelectedFile(fileUploaded)
   }
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: DragEvent) => {
     event.preventDefault()
   }
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: any) => {
     event.preventDefault()
     const file = event.dataTransfer.files[0]
     setSelectedFile(file)
@@ -59,7 +65,9 @@ const FileUpload = ({ selectedFile, setSelectedFile }) => {
       />
       <div>Drag and drop your files here</div>
       <UploadButton onClick={handleClick}>Browse Files</UploadButton>
-      {selectedFile && <div>{selectedFile.name}</div>}
+      {selectedFile && typeof selectedFile !== "string" && (
+        <div>{selectedFile.name}</div>
+      )}
     </FileUploadContainer>
   )
 }

@@ -184,13 +184,17 @@ export default function Page() {
       return
     }
 
+    if (typeof selectedFile === "string") {
+      console.error("not a file or a valid url")
+      return
+    }
+
     // parse the csv into json
     if (isCSV) {
       parse(selectedFile, {
         dynamicTyping: true,
         complete: (results: any) => loadFile(results.data),
       })
-    } else if (isJSON) {
     } else if (isJSON) {
       jsonFileToArrays(selectedFile).then((data) => {
         loadFile(data)

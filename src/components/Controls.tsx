@@ -15,7 +15,7 @@ interface Props {
   flip?: () => void
   setScale?: any
   data: any[]
-  scale: { x: string; y: string }
+  scale?: { x: string; y: string }
 }
 
 const Controls = ({ flip, data, setScale, scale }: Props) => {
@@ -46,7 +46,7 @@ const Controls = ({ flip, data, setScale, scale }: Props) => {
     <Container>
       {flip && <MenuButton onClick={flip}>Flip axes</MenuButton>}
       <MenuButton onClick={downloadData}> ↓CSV</MenuButton>
-      {setScale && (
+      {setScale && scale && (
         <>
           <MenuButton onClick={() => setScale("x")}>
             X Scale: {scale.x}

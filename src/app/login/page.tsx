@@ -4,7 +4,7 @@ import { auth } from "@/firebase/config"
 import { signInWithGoogle } from "@/firebase/useAuth"
 import { onAuthStateChanged } from "firebase/auth"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { FormEvent, useEffect } from "react"
 import styled from "styled-components"
 import { useAuth } from "../context"
 import { addData } from "@/firebase/database"
@@ -39,7 +39,7 @@ export default function Page() {
   const { setUser } = useAuth()
   const router = useRouter()
 
-  function signIn(e) {
+  function signIn(e: FormEvent) {
     e.preventDefault()
     signInWithGoogle()
   }
