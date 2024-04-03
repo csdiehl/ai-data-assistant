@@ -77,11 +77,7 @@ async function setupDB(file: string) {
   const allData = await queryDB("SELECT * FROM data LIMIT 10000")
   const sampleData = allData.slice(0, 3)
 
-  console.log(createTableQuery)
-
   const schema = await getSchema(db, tableName)
-
-  console.log(sampleData)
 
   const aiState = getMutableAIState<typeof AI>()
 

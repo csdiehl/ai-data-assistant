@@ -67,12 +67,7 @@ const Chart = ({
 
     const yOptions = type === "scatter" ? { grid: true, type: scale.y } : {}
 
-    const xOptions =
-      type === "scatter"
-        ? { grid: true, type: scale.x }
-        : type === "line"
-        ? { ticks: 5 }
-        : {}
+    const xOptions = type === "scatter" ? { grid: true, type: scale.x } : {}
 
     const { x, y } = axes
     const plot = Plot.plot({
@@ -117,15 +112,17 @@ function Mark({
 }: ChartSpec) {
   switch (type) {
     case "line":
+      const interval = getTimeInterval(x)
+      // might need to parse dates in a more robust way, i.e. with x: (d) => utcParse("%Y")(d[x]),
+
       return [
         Plot.lineY(data, {
-          x,
+          x: (d) => new Date(d[x].toString()),
           y,
           stroke: color,
           fill: "none",
-          sort: x,
+          interval,
         }),
-        Plot.tip(data, Plot.pointerX({ x: x, y: y, title: (d) => d[x] })),
       ]
     case "scatter":
       return [
@@ -167,6 +164,18 @@ function Mark({
     default:
       return undefined
   }
+}
+
+// get the correct time interval from the variable name
+function getTimeInterval(
+  x: string
+): "year" | "month" | "week" | "day" | undefined {
+  const v = x.toLowerCase()
+  if (v.includes("year")) return "year"
+  if (v.includes("month")) return "month"
+  if (v.includes("week")) return "week"
+  if (v.includes("day")) return "day"
+  return undefined // default to undefined if no time interval is found
 }
 
 export default Chart
