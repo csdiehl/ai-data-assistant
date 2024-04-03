@@ -115,9 +115,11 @@ function Mark({
       const interval = getTimeInterval(x)
       // might need to parse dates in a more robust way, i.e. with x: (d) => utcParse("%Y")(d[x]),
 
+      console.log(x, y)
+
       return [
         Plot.lineY(data, {
-          x: (d) => new Date(d[x].toString()),
+          x: (d) => new Date(typeof d[x] === "number" ? d[x].toString() : d[x]),
           y,
           stroke: color,
           fill: "none",
