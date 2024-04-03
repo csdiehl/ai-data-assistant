@@ -156,10 +156,8 @@ export default function Page() {
     }
 
     function loadFile(data: any) {
-      // fix spaces in column names
-      data[0] = data[0].map((d: string) =>
-        d.replaceAll(" ", "_").replaceAll("(", "").replaceAll(")", "").trim()
-      )
+      // fix spaces and reserved SQL words in column names
+      data[0] = cleanColumns(data[0])
 
       // pass to the AI
       setupDB(JSON.stringify(data))
@@ -214,6 +212,17 @@ export default function Page() {
       alert("Please select a CSV or JSON file")
       return
     }
+  }
+
+  function cleanColumns(cols: string[]): string[] {
+    return cols.map((d: string) =>
+      d
+        .replaceAll(" ", "_")
+        .replaceAll("(", "")
+        .replaceAll(")", "")
+        .replaceAll("group", "category")
+        .trim()
+    )
   }
 
   function uploadFileFromURL(e: any) {
