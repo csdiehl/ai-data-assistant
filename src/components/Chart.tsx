@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from "react"
 import * as Plot from "@observablehq/plot"
 import Controls from "./Controls"
 import { primary } from "./settings"
+//@ts-ignore
 import { utcParse } from "d3-time-format"
 
 const chartHeight = 400
@@ -119,8 +120,6 @@ function Mark({
       const interval = getTimeInterval(x)
       // might need to parse dates in a more robust way, i.e. with x: (d) => utcParse("%Y")(d[x]),
       const formatter = timeFormat ? utcParse(timeFormat) : undefined
-
-      console.log(timeFormat)
 
       return [
         Plot.lineY(data, {

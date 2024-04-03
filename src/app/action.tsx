@@ -233,8 +233,9 @@ Besides that, you can also chat with users and do some calculations if needed.`,
               y: z.string().describe("The y-axis variable."),
               timeFormat: z
                 .string()
+                .optional()
                 .describe(
-                  "If x is a time variable, the format specifier for the time field. For example, for dates like 1970-01-01, the specifier would be %Y-%m-%d"
+                  "If this is a line chart, include this field. This is the format specifier for the time field on the x axis. For example, for dates like 1970-01-01, the specifier would be %Y-%m-%d"
                 ),
               size: z
                 .string()
