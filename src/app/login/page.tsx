@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { FormEvent, useEffect } from "react"
 import styled from "styled-components"
 import { useAuth } from "../context"
-import { addData } from "@/firebase/database"
+import { addData, getData } from "@/firebase/database"
 
 const Login = styled.button`
   height: 48px;
@@ -49,14 +49,21 @@ export default function Page() {
       if (user) {
         // save the info in context for other page to access
         setUser(user)
-        // add the user to the database
-        addData("users", user.uid, {
-          name: user.displayName,
-          uid: user.uid,
-        }).then(({ result, error }) => {
-          if (error) console.log(error)
-          return result
+        // check if the user already exists in the database
+        getData("users", user.uid).then(({ result }) => {
+          if (!result) {
+            // add the user to the database if they don't exist there already
+            addData("users", user.uid, {
+              name: user.displayName,
+              uid: user.uid,
+              credits: 25,
+            }).then(({ result, error }) => {
+              if (error) console.log(error)
+              return result
+            })
+          }
         })
+
         // redirect to the home page
         router.push("/")
       } else {

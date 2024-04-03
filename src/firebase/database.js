@@ -1,5 +1,11 @@
 import firebase_app from "./config"
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore"
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+} from "firebase/firestore"
 
 const db = getFirestore(firebase_app)
 
@@ -33,4 +39,22 @@ export async function getData(collection, id) {
   }
 
   return { result, error }
+}
+
+// decrement user's allowed credits on every generation
+export async function updateCredits(userId) {
+  const docRef = doc(db, "users", userId)
+
+  const count = (await getDoc(docRef)).data().credits
+
+  await updateDoc(docRef, {
+    credits: count - 1,
+  })
+}
+
+export async function getCredits(userId) {
+  const docRef = doc(db, "users", userId)
+  const result = await getDoc(docRef)
+
+  return result.data().credits
 }

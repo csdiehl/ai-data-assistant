@@ -12,6 +12,7 @@ import FileList from "@/components/FileList"
 import { parse } from "papaparse"
 
 import { signOut } from "@/firebase/useAuth"
+import { updateCredits, getCredits } from "@/firebase/database"
 import { useRouter } from "next/navigation"
 import { useAuth } from "./context"
 // import { useGoogleSignIn } from "@/firebase/auth"
@@ -124,11 +125,21 @@ export default function Page() {
   const [messages, setMessages] = useUIState<typeof AI>()
   const { submitUserMessage, setupDB } = useActions<typeof AI>()
   const [aiState, setAiState] = useAIState()
+  const [credits, setCredits] = useState<number>(0)
+  const noCreditsLeft = credits <= 0
 
   const router = useRouter()
 
   useEffect(() => {
-    if (user == null) router.push("/login")
+    if (user == null) {
+      router.push("/login")
+      return
+    }
+
+    // get the credits and set in state
+    getCredits(user.uid).then((credits) => {
+      setCredits(credits)
+    })
   }, [user, router])
 
   const [selectedFile, setSelectedFile] = useState<File | string>("")
@@ -160,8 +171,6 @@ export default function Page() {
     const isCSV = selectedFile?.type === "text/csv"
     //@ts-ignore
     const isJSON = selectedFile?.type === "application/json"
-
-    console.log("file check", selectedFile, isURL)
 
     if (isURL) {
       if (checkFileType(selectedFile, ".json")) {
@@ -243,14 +252,22 @@ export default function Page() {
         <Submit $ghost onClick={() => signOut()}>
           Log Out
         </Submit>
+        <p>{credits} Credits</p>
       </Form>
 
-      {noData ? (
+      {noData || noCreditsLeft ? (
         <EmptyState>
-          <h2>
-            Welcome, {user?.displayName} <br />
-            To chat with the AI you need some data!{" "}
-          </h2>
+          {noCreditsLeft ? (
+            <h2>
+              Sorry you are out of free generations! Right now I am limiting
+              credits to keep usage affordable while I develop the app.
+            </h2>
+          ) : (
+            <h2>
+              Welcome, {user?.displayName} <br />
+              To chat with the AI you need some data!{" "}
+            </h2>
+          )}
           {user && (
             <FileList setSelectedFile={setSelectedFile} userId={user.uid} />
           )}
@@ -291,6 +308,10 @@ export default function Page() {
               ])
 
               setInputValue("")
+
+              // deduct credits from user in db
+              updateCredits(user?.uid)
+              setCredits((c) => c - 1)
             }}
           >
             <InputContainer>
