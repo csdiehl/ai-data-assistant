@@ -229,111 +229,117 @@ export default function Page() {
 
   return (
     <App>
-      <Form>
-        <FileInput
-          selectedFile={selectedFile}
-          setSelectedFile={setSelectedFile}
-        ></FileInput>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label htmlFor="url-input">Or enter a CSV or JSON URL</label>
-          <URLInput
-            value={selectedURL}
-            id="url-input"
-            placeholder="https://example.com"
-            pattern="https://.*"
-            type="url"
-            onChange={uploadFileFromURL}
-          ></URLInput>
-        </div>
+      {user ? (
+        <>
+          <Form>
+            <FileInput
+              selectedFile={selectedFile}
+              setSelectedFile={setSelectedFile}
+            ></FileInput>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <label htmlFor="url-input">Or enter a CSV or JSON URL</label>
+              <URLInput
+                value={selectedURL}
+                id="url-input"
+                placeholder="https://example.com"
+                pattern="https://.*"
+                type="url"
+                onChange={uploadFileFromURL}
+              ></URLInput>
+            </div>
 
-        <Submit disabled={!noData || !selectedFile} onClick={handleSubmit}>
-          Chat with your Data!
-        </Submit>
-        <Submit $ghost onClick={() => signOut()}>
-          Log Out
-        </Submit>
-        <p>{credits} Credits</p>
-      </Form>
+            <Submit disabled={!noData || !selectedFile} onClick={handleSubmit}>
+              Chat with your Data!
+            </Submit>
+            <Submit $ghost onClick={() => signOut()}>
+              Log Out
+            </Submit>
+            <p>{credits} Credits</p>
+          </Form>
 
-      {noData || noCreditsLeft ? (
-        <EmptyState>
-          {noCreditsLeft ? (
-            <h2>
-              Sorry you are out of free generations! Right now I am limiting
-              credits to keep usage affordable while I develop the app.
-            </h2>
-          ) : (
-            <h2>
-              Welcome, {user?.displayName} <br />
-              To chat with the AI you need some data!{" "}
-            </h2>
-          )}
-          {user && (
-            <FileList setSelectedFile={setSelectedFile} userId={user.uid} />
-          )}
-        </EmptyState>
-      ) : (
-        <Messages>
-          <Description
-            data={aiState.dataSummary}
-            length={length}
-            vars={aiState.columns}
-          />
-          {
-            // View messages in UI state
-            messages.map((message, i) => (
-              <Message $aiMessage={i % 2 !== 0} key={message.id}>
-                {message.display}
-              </Message>
-            ))
-          }
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault()
-
-              // Add user message to UI state
-              setMessages((currentMessages) => [
-                ...currentMessages,
-                {
-                  id: Date.now(),
-                  display: <div>{inputValue}</div>,
-                },
-              ])
-
-              // Submit and get response message
-              const responseMessage = await submitUserMessage(inputValue)
-              setMessages((currentMessages) => [
-                ...currentMessages,
-                responseMessage,
-              ])
-
-              setInputValue("")
-
-              // deduct credits from user in db
-              updateCredits(user?.uid)
-              setCredits((c) => c - 1)
-            }}
-          >
-            <InputContainer>
-              {selectedFile && (
-                <p style={{ color: primary }}>
-                  {/*@ts-ignore*/}
-                  Chatting with {selectedFile.name}{" "}
-                  <span style={{ color: "grey" }}>{length} rows</span>
-                </p>
+          {noData || noCreditsLeft ? (
+            <EmptyState>
+              {noCreditsLeft ? (
+                <h2>
+                  Sorry you are out of free generations! Right now I am limiting
+                  credits to keep usage affordable while I develop the app.
+                </h2>
+              ) : (
+                <h2>
+                  Welcome, {user?.displayName} <br />
+                  To chat with the AI you need some data!{" "}
+                </h2>
               )}
-              <Input
-                ref={inputRef}
-                disabled={noData}
-                placeholder="Send a message..."
-                value={inputValue}
-                onChange={(event) => {
-                  setInputValue(event.target.value)
-                }}
+              {user && (
+                <FileList setSelectedFile={setSelectedFile} userId={user.uid} />
+              )}
+            </EmptyState>
+          ) : (
+            <Messages>
+              <Description
+                data={aiState.dataSummary}
+                length={length}
+                vars={aiState.columns}
               />
-            </InputContainer>
-          </form>
-        </Messages>
+              {
+                // View messages in UI state
+                messages.map((message, i) => (
+                  <Message $aiMessage={i % 2 !== 0} key={message.id}>
+                    {message.display}
+                  </Message>
+                ))
+              }
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault()
+
+                  // Add user message to UI state
+                  setMessages((currentMessages) => [
+                    ...currentMessages,
+                    {
+                      id: Date.now(),
+                      display: <div>{inputValue}</div>,
+                    },
+                  ])
+
+                  // Submit and get response message
+                  const responseMessage = await submitUserMessage(inputValue)
+                  setMessages((currentMessages) => [
+                    ...currentMessages,
+                    responseMessage,
+                  ])
+
+                  setInputValue("")
+
+                  // deduct credits from user in db
+                  updateCredits(user?.uid)
+                  setCredits((c) => c - 1)
+                }}
+              >
+                <InputContainer>
+                  {selectedFile && (
+                    <p style={{ color: primary }}>
+                      {/*@ts-ignore*/}
+                      Chatting with {selectedFile.name}{" "}
+                      <span style={{ color: "grey" }}>{length} rows</span>
+                    </p>
+                  )}
+                  <Input
+                    ref={inputRef}
+                    disabled={noData}
+                    placeholder="Send a message..."
+                    value={inputValue}
+                    onChange={(event) => {
+                      setInputValue(event.target.value)
+                    }}
+                  />
+                </InputContainer>
+              </form>
+            </Messages>
+          )}
+        </>
+      ) : (
+        <div>Loading...</div>
       )}
     </App>
   )
