@@ -53,7 +53,7 @@ const Table = ({ data, xVar }: { data: Object[]; xVar: string }) => {
           </Row>
         </thead>
         <tbody>
-          {data.map((row, i) => {
+          {data.slice(0, 30).map((row, i) => {
             const values = Object.values(row)
 
             return (

@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from "react"
 import * as Plot from "@observablehq/plot"
 import Controls from "./Controls"
 import { primary } from "./settings"
+import { utcParse } from "d3-time-format"
 
 const chartHeight = 400
 interface ChartSpec {
@@ -15,6 +16,7 @@ interface ChartSpec {
   data: any[]
   dataKey: string
   trace?: string // trace shows what the AI put in for the parameters
+  timeFormat?: string
 }
 
 type ScaleType = "linear" | "log"
@@ -27,6 +29,7 @@ const Chart = ({
   size,
   type = "scatter",
   dataKey,
+  timeFormat,
 }: ChartSpec) => {
   const container = useRef<HTMLDivElement>(null)
 
@@ -66,10 +69,10 @@ const Chart = ({
     if (!container.current) return
 
     const yOptions = type === "scatter" ? { grid: true, type: scale.y } : {}
-
     const xOptions = type === "scatter" ? { grid: true, type: scale.x } : {}
 
     const { x, y } = axes
+
     const plot = Plot.plot({
       height: chartHeight,
       y: yOptions,
@@ -77,13 +80,13 @@ const Chart = ({
       marginLeft: 80,
       color: { legend: true },
       r: { legend: true },
-      marks: Mark({ data, x, y, color, type, dataKey, size }),
+      marks: Mark({ data, x, y, color, type, dataKey, size, timeFormat }),
     })
 
     container.current.append(plot)
 
     return () => plot.remove()
-  }, [axes, color, data, type, dataKey, size, scale])
+  }, [axes, color, data, type, dataKey, size, scale, timeFormat])
   return (
     <div>
       <Controls
@@ -109,17 +112,22 @@ function Mark({
   type,
   data,
   dataKey,
+  timeFormat,
 }: ChartSpec) {
   switch (type) {
     case "line":
       const interval = getTimeInterval(x)
       // might need to parse dates in a more robust way, i.e. with x: (d) => utcParse("%Y")(d[x]),
+      const formatter = timeFormat ? utcParse(timeFormat) : undefined
 
-      console.log(x, y)
+      console.log(timeFormat)
 
       return [
         Plot.lineY(data, {
-          x: (d) => new Date(typeof d[x] === "number" ? d[x].toString() : d[x]),
+          x: (d) =>
+            formatter
+              ? formatter(d[x])
+              : new Date(typeof d[x] === "number" ? d[x].toString() : d[x]),
           y,
           stroke: color,
           fill: "none",
@@ -179,5 +187,7 @@ function getTimeInterval(
   if (v.includes("day")) return "day"
   return undefined // default to undefined if no time interval is found
 }
+
+const parseDate = (specifier: string) => utcParse(specifier)
 
 export default Chart

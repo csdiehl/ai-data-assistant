@@ -180,13 +180,13 @@ If the user just asks a general question about the data, without mentioning anyt
 
 If the user asks a question about the data, create a syntactically correct sqlite3 query to run, using the following schema:
 ${dbSchema}
-You can sort the results by a relevant column to return the most interesting examples in the database. If sorting, always limit to the top 20 results using the LIMIT clause.
+You can sort the results by a relevant column to return the most interesting examples in the database.
 Never query for all the columns from a specific table, only ask for a the few relevant columns given the question.
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 To use your query to interact with the database, call \`summarize_data\`. 
 
 You can choose charts depending on the number and data type of variables in the question. The data types are described in the schema.
-If there are less than 15 rows in the result, always put 'table' for the chart type, unless the user says they want a chart. 
+If there are less than 15 rows in the result, always put 'table' for the chart type, unless the user says they want a chart. Limit tables to at most 20 rows using the limit clause in your SQL query.
 For just one numeric and one text variable, use a bar chart. For barY, the text variable should be on the x axis. 
 For barX, the text variable should be on the y axis.
 
@@ -231,6 +231,11 @@ Besides that, you can also chat with users and do some calculations if needed.`,
                 ),
               x: z.string().describe("The x-axis variable."),
               y: z.string().describe("The y-axis variable."),
+              timeFormat: z
+                .string()
+                .describe(
+                  "If x is a time variable, the format specifier for the time field. For example, for dates like 1970-01-01, the specifier would be %Y-%m-%d"
+                ),
               size: z
                 .string()
                 .optional()
@@ -267,7 +272,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
   })
 
   completion.onFunctionCall("summarize_data", async ({ query, chartSpec }) => {
-    const { x, y, title, type, color, size } = chartSpec
+    const { x, y, title, type, color, size, timeFormat } = chartSpec
 
     reply.update(
       <ResponseCard title={title} caption={query}>
@@ -294,6 +299,7 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             y={y}
             size={size}
             color={color}
+            timeFormat={timeFormat}
           />
         </ResponseCard>
       )
