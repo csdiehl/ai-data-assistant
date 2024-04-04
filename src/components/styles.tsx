@@ -56,3 +56,25 @@ export const MenuButton = styled.button`
     background: rgba(0, 0, 0, 0.2);
   }
 `
+
+export const Submit = styled.button<{ $ghost?: boolean }>`
+  padding: 8px;
+  border-radius: 8px;
+  background: ${(props) => (props.$ghost ? "none" : primary)};
+  font-weight: bold;
+  border: ${(props) => (props.$ghost ? `2px solid ${primary}` : "none")};
+  color: ${(props) => (props.$ghost ? `${primary}` : "#FFF")};
+  cursor: pointer;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    filter: brightness(80%);
+  }
+
+  &:disabled {
+    background: lightgrey;
+  }
+`

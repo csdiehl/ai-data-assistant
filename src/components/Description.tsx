@@ -4,6 +4,7 @@ import styled from "styled-components"
 import { Label } from "./styles"
 import { useRef, useEffect } from "react"
 import * as Plot from "@observablehq/plot"
+import { primary } from "./settings"
 
 const Wrapper = styled.div`
   padding: 8px;
@@ -13,13 +14,15 @@ const Wrapper = styled.div`
     margin: 16px 0;
     font-size: 1rem;
     font-weight: bold;
+    color: grey;
   }
 `
 
 const Variable = styled.div`
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: flex-start;
+  height: 48px;
 `
 
 // An example of a flight card component.
@@ -34,19 +37,24 @@ function Description({
 }) {
   return (
     <Wrapper>
-      <h2>There are {length.toFixed(0)} rows here</h2>
-      <h3>Variables</h3>
+      <h2>There are {length.toFixed(0)} rows here, with these variables</h2>
       <ul>
         {vars.map((d, i) => {
           const varType = typeof data[0][d]
           return (
             <Variable key={i}>
-              <Label key={d}>{d}</Label>
-              <p
-                style={{ color: "grey", fontWeight: 400, fontSize: ".875rem" }}
-              >
-                | {varType}
-              </p>
+              <div>
+                <Label key={d}>{d}</Label>
+                <p
+                  style={{
+                    color: "grey",
+                    fontWeight: 400,
+                    fontSize: ".875rem",
+                  }}
+                >
+                  {varType}
+                </p>
+              </div>
               {varType === "number" && (
                 <BoxPlot data={data.map((row) => row[d])} />
               )}
@@ -63,7 +71,13 @@ function BoxPlot({ data }: { data: number[] }) {
 
   useEffect(() => {
     if (!container.current) return
-    const plot = Plot.boxX(data).plot({ width: 300 })
+    const plot = Plot.plot({
+      width: 300,
+      height: 48,
+      marks: [
+        Plot.boxX(data, { fill: primary, stroke: primary, fillOpacity: 0.3 }),
+      ],
+    })
 
     container.current.append(plot)
 

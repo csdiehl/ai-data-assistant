@@ -6,7 +6,6 @@ import styled from "styled-components"
 import type { AI } from "./action"
 //@ts-ignore
 import Description from "@/components/Description"
-import FileInput from "@/components/FileInput"
 import { primary } from "@/components/settings"
 import FileList from "@/components/FileList"
 import { parse } from "papaparse"
@@ -15,15 +14,14 @@ import { signOut } from "@/firebase/useAuth"
 import { updateCredits, getCredits } from "@/firebase/database"
 import { useRouter } from "next/navigation"
 import { useAuth } from "./context"
-// import { useGoogleSignIn } from "@/firebase/auth"
-
-const inputHeight = 24
+import Profile from "@/components/Profile"
+import UploadForm from "@/components/UploadForm"
 
 const App = styled.div`
   background: #f5f5f5;
   color: #333;
   height: 100vh;
-  padding: 16px;
+  padding: 0 16px;
   overflow-y: scroll;
 
   label {
@@ -52,14 +50,6 @@ const Input = styled.input`
   line-height: 1rem;
 `
 
-const URLInput = styled.input`
-  all: unset;
-  height: ${inputHeight}px;
-  background: none;
-  border: none;
-  color: ${primary} !important;
-`
-
 const Message = styled.div<{ $aiMessage: boolean }>`
   ${(props) => props.$aiMessage && "align-self: flex-end"};
   border-radius: 8px;
@@ -72,26 +62,6 @@ const Message = styled.div<{ $aiMessage: boolean }>`
   line-height: 1.25rem;
 `
 
-const Submit = styled.button<{ $ghost?: boolean }>`
-  padding: 8px;
-  border-radius: 8px;
-  background: ${(props) => (props.$ghost ? "none" : primary)};
-  font-weight: bold;
-  border: ${(props) => (props.$ghost ? `2px solid ${primary}` : "none")};
-  color: ${(props) => (props.$ghost ? `${primary}` : "#FFF")};
-  cursor: pointer;
-  height: 48px;
-  height: 48px;
-
-  &:hover {
-    filter: brightness(80%);
-  }
-
-  &:disabled {
-    background: lightgrey;
-  }
-`
-
 const Messages = styled.div`
   margin-bottom: 100px;
   display: flex;
@@ -99,13 +69,18 @@ const Messages = styled.div`
   max-width: 1000px;
 `
 
-const Form = styled.form`
+const Nav = styled.nav`
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  align-items: flex-start;
   gap: 16px;
-  padding: 24px;
+  justify-content: space-between;
+  padding: 16px;
+  position: sticky;
+  top: 0;
+  background: #f5f5f5;
+  z-index: 3;
 `
+
 const EmptyState = styled.div`
   margin: 160px auto;
   display: flex;
@@ -143,7 +118,6 @@ export default function Page() {
   }, [user, router])
 
   const [selectedFile, setSelectedFile] = useState<File | string>("")
-  const selectedURL = typeof selectedFile === "string" ? selectedFile : ""
   const [length, setLength] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -225,10 +199,6 @@ export default function Page() {
     )
   }
 
-  function uploadFileFromURL(e: any) {
-    setSelectedFile(e.target.value)
-  }
-
   useEffect(() => {
     if (messages.length > 0 && inputRef?.current) {
       // scroll to bottom of messages
@@ -242,31 +212,19 @@ export default function Page() {
     <App>
       {user ? (
         <>
-          <Form>
-            <FileInput
+          <Nav>
+            <UploadForm
+              handleSubmit={handleSubmit}
+              noData={noData}
               selectedFile={selectedFile}
               setSelectedFile={setSelectedFile}
-            ></FileInput>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <label htmlFor="url-input">Or enter a CSV or JSON URL</label>
-              <URLInput
-                value={selectedURL}
-                id="url-input"
-                placeholder="https://example.com"
-                pattern="https://.*"
-                type="url"
-                onChange={uploadFileFromURL}
-              ></URLInput>
-            </div>
-
-            <Submit disabled={!noData || !selectedFile} onClick={handleSubmit}>
-              Chat with your Data!
-            </Submit>
-            <Submit $ghost onClick={() => signOut()}>
-              Log Out
-            </Submit>
-            <p>{credits} Credits</p>
-          </Form>
+            />
+            <Profile
+              signOut={signOut}
+              credits={credits}
+              name={user.displayName}
+            />
+          </Nav>
 
           {noData || noCreditsLeft ? (
             <EmptyState>
@@ -277,7 +235,7 @@ export default function Page() {
                 </h2>
               ) : (
                 <h2>
-                  Welcome, {user?.displayName} <br />
+                  Welcome, {user?.displayName?.split(" ")[0]} <br />
                   To chat with the AI you need some data!{" "}
                 </h2>
               )}
