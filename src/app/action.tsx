@@ -10,6 +10,7 @@ import { Card, Caption, SkeletonChart } from "@/components/styles"
 import { ReactNode } from "react"
 import { runOpenAICompletion } from "@/lib/utils"
 import TimeChart from "@/components/TimeChart"
+import BarChart from "@/components/BarChart"
 
 let db: any = null
 
@@ -298,6 +299,15 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             y={y}
             color={color}
             timeFormat={timeFormat}
+          />
+        ) : type === "barX" || type === "barY" ? (
+          <BarChart
+            type={type}
+            data={response}
+            dataKey={dataKey}
+            x={x}
+            y={y}
+            color={color}
           />
         ) : (
           <Chart
