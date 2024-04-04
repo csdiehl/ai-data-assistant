@@ -285,23 +285,21 @@ Besides that, you can also chat with users and do some calculations if needed.`,
 
     const response = await queryDB(query)
 
-    const component =
-      type === "table" ? (
-        <ResponseCard title={title} caption={query}>
+    const component = (
+      <ResponseCard title={title} caption={query}>
+        {type === "table" ? (
           <Table data={response} xVar={x} />
-        </ResponseCard>
-      ) : type === "line" || type === "area" ? (
-        <TimeChart
-          type={type}
-          data={response}
-          dataKey={dataKey}
-          x={x}
-          y={y}
-          color={color}
-          timeFormat={timeFormat}
-        />
-      ) : (
-        <ResponseCard title={title} caption={query}>
+        ) : type === "line" || type === "area" ? (
+          <TimeChart
+            type={type}
+            data={response}
+            dataKey={dataKey}
+            x={x}
+            y={y}
+            color={color}
+            timeFormat={timeFormat}
+          />
+        ) : (
           <Chart
             type={type}
             data={response}
@@ -311,8 +309,9 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             size={size}
             color={color}
           />
-        </ResponseCard>
-      )
+        )}
+      </ResponseCard>
+    )
 
     reply.done(component)
 
