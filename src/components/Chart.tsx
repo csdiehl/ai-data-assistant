@@ -4,20 +4,16 @@ import React, { useRef, useEffect, useState } from "react"
 import * as Plot from "@observablehq/plot"
 import Controls from "./Controls"
 import { primary } from "./settings"
-//@ts-ignore
-import { utcParse } from "d3-time-format"
 
 const chartHeight = 400
 interface ChartSpec {
-  type?: "line" | "scatter" | "area" | "heatmap" | "density" | "barX" | "barY"
+  type?: "scatter" | "heatmap" | "density" | "barX" | "barY"
   x: string
   y?: string
   color?: string
   size?: string
   data: any[]
   dataKey: string
-  trace?: string // trace shows what the AI put in for the parameters
-  timeFormat?: string
 }
 
 type ScaleType = "linear" | "log"
@@ -30,7 +26,6 @@ const Chart = ({
   size,
   type = "scatter",
   dataKey,
-  timeFormat,
 }: ChartSpec) => {
   const container = useRef<HTMLDivElement>(null)
 
@@ -81,13 +76,13 @@ const Chart = ({
       marginLeft: 80,
       color: { legend: true },
       r: { legend: true },
-      marks: Mark({ data, x, y, color, type, dataKey, size, timeFormat }),
+      marks: Mark({ data, x, y, color, type, dataKey, size }),
     })
 
     container.current.append(plot)
 
     return () => plot.remove()
-  }, [axes, color, data, type, dataKey, size, scale, timeFormat])
+  }, [axes, color, data, type, dataKey, size, scale])
   return (
     <div>
       <Controls
@@ -113,33 +108,13 @@ function Mark({
   type,
   data,
   dataKey,
-  timeFormat,
 }: ChartSpec) {
   switch (type) {
-    case "line":
-      const interval = getTimeInterval(x)
-      // might need to parse dates in a more robust way, i.e. with x: (d) => utcParse("%Y")(d[x]),
-      const formatter = timeFormat ? utcParse(timeFormat) : undefined
-
-      return [
-        Plot.lineY(data, {
-          x: (d) =>
-            formatter
-              ? formatter(d[x])
-              : new Date(typeof d[x] === "number" ? d[x].toString() : d[x]),
-          y,
-          stroke: color,
-          fill: "none",
-          interval,
-        }),
-      ]
     case "scatter":
       return [
         Plot.dot(data, { x, y, fill: color, r: size }),
         Plot.tip(data, Plot.pointerX({ x: x, y: y, title: (d) => d[dataKey] })),
       ]
-    case "area":
-      return [Plot.areaY(data, { x, y, fill: color, sort: x })]
     case "heatmap":
       return [
         Plot.rect(data, {
@@ -174,19 +149,5 @@ function Mark({
       return undefined
   }
 }
-
-// get the correct time interval from the variable name
-function getTimeInterval(
-  x: string
-): "year" | "month" | "week" | "day" | undefined {
-  const v = x.toLowerCase()
-  if (v.includes("year")) return "year"
-  if (v.includes("month")) return "month"
-  if (v.includes("week")) return "week"
-  if (v.includes("day")) return "day"
-  return undefined // default to undefined if no time interval is found
-}
-
-const parseDate = (specifier: string) => utcParse(specifier)
 
 export default Chart

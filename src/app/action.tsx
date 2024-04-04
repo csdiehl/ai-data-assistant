@@ -1,7 +1,6 @@
 import { OpenAI } from "openai"
 import { createAI, getMutableAIState, createStreamableUI } from "ai/rsc"
 import { z } from "zod"
-import Description from "@/components/Description"
 import Chart from "@/components/Chart"
 import Table from "@/components/Table"
 // Import the necessary modules for SQLite
@@ -10,6 +9,7 @@ import { error } from "console"
 import { Card, Caption, SkeletonChart } from "@/components/styles"
 import { ReactNode } from "react"
 import { runOpenAICompletion } from "@/lib/utils"
+import TimeChart from "@/components/TimeChart"
 
 let db: any = null
 
@@ -150,7 +150,7 @@ async function submitUserMessage(userInput: string) {
   })
 
   // metadata that is needed to answer queries
-  const { dataKey, tableName, columns } = aiState.get()
+  const { dataKey } = aiState.get()
 
   const sampleData: any[] = aiState.get().sampleData
   const dbSchema: string = aiState.get().schema
@@ -290,6 +290,16 @@ Besides that, you can also chat with users and do some calculations if needed.`,
         <ResponseCard title={title} caption={query}>
           <Table data={response} xVar={x} />
         </ResponseCard>
+      ) : type === "line" || type === "area" ? (
+        <TimeChart
+          type={type}
+          data={response}
+          dataKey={dataKey}
+          x={x}
+          y={y}
+          color={color}
+          timeFormat={timeFormat}
+        />
       ) : (
         <ResponseCard title={title} caption={query}>
           <Chart
@@ -300,7 +310,6 @@ Besides that, you can also chat with users and do some calculations if needed.`,
             y={y}
             size={size}
             color={color}
-            timeFormat={timeFormat}
           />
         </ResponseCard>
       )
